@@ -20,7 +20,6 @@ dist-ssr
 *.pfx
 *.jks
 *.keystore
-.npmrc
 
 # Editor directories and files
 .vscode/*
