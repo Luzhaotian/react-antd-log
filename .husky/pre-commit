@@ -1,0 +1,5 @@
+echo "Running git staged diff check..."
+npm run git:check
+
+echo "Running lint-staged (ESLint/Prettier checks)..."
+npm run lint:staged
