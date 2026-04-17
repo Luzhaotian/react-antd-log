@@ -1,0 +1,22 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="faviconGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#d4380d" />
+      <stop offset="50%" stop-color="#fa541c" />
+      <stop offset="100%" stop-color="#fa8c16" />
+    </linearGradient>
+    <linearGradient id="faviconFlameHighlight" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#fff" stop-opacity="1" />
+      <stop offset="100%" stop-color="#fff" stop-opacity="0.75" />
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="8" fill="url(#faviconGradient)" />
+  <path
+    d="M16 6c2 1.5 6 4 6 10 0 4-2 8-6 10-4-2-6-6-6-10 0-6 4-8.5 6-10z"
+    fill="url(#faviconFlameHighlight)"
+    fill-rule="evenodd"
+  />
+  <circle cx="10" cy="9" r="1.25" fill="white" fill-opacity="0.95" />
+  <circle cx="16" cy="7" r="1.25" fill="white" fill-opacity="1" />
+  <circle cx="22" cy="9" r="1.25" fill="white" fill-opacity="0.95" />
+</svg>

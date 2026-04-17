@@ -1,0 +1,50 @@
+/* 使用 UnoCSS 处理大部分样式，这里只保留必要的全局样式 */
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* View Transitions API - 仅内容区域动画 */
+/* 禁用根元素默认动画 */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+/* 内容区域：淡出 + 向左平移 */
+::view-transition-old(page-content) {
+  animation: 120ms ease-out both fade-out, 120ms ease-out both slide-to-left;
+}
+
+/* 内容区域：淡入 + 从右平移（同时进行，无延迟） */
+::view-transition-new(page-content) {
+  animation: 120ms ease-out both fade-in, 120ms ease-out both slide-from-right;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes slide-from-right {
+  from {
+    transform: translateX(20px);
+  }
+}
+
+@keyframes slide-to-left {
+  to {
+    transform: translateX(-20px);
+  }
+}
