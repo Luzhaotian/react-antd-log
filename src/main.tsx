@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { createBrowserRouter, createHashRouter, RouterProvider } from 'react-router-dom'
 import dayjs from 'dayjs'
 import { APP_NAME } from '@/constants'
 import 'dayjs/locale/zh-cn'
@@ -25,18 +25,36 @@ dayjs.tz.setDefault('Asia/Shanghai')
 // 首屏标题由统一配置设置（路由切换后由 useDocumentTitle 覆盖）
 document.title = APP_NAME
 
-/** 与 Vite `base` 一致，部署在 GitHub Pages 子路径时需设置 basename */
+/** 与 Vite `base` 一致，部署在 GitHub Pages 子路径时需设置 basename（仅 History 模式） */
 function routerBasename(): string | undefined {
   const base = import.meta.env.BASE_URL
   if (base === '/') return undefined
   return base.endsWith('/') ? base.slice(0, -1) : base
 }
 
+const useHashRouter = import.meta.env.VITE_HASH_ROUTER === 'true'
 const basename = routerBasename()
 
-// 创建 data router，支持 useBlocker 等新特性
-const router = createBrowserRouter(
-  [
+/**
+ * GitHub Pages 无法把深链改成 HTTP 200；Hash 路由下文档始终请求 /repo/index.html。
+ * 兼容旧书签：/repo/invest/foo → /repo/#/invest/foo
+ */
+let skipRender = false
+if (useHashRouter && (!window.location.hash || window.location.hash === '#')) {
+  const normalized = import.meta.env.BASE_URL.replace(/\/?$/, '')
+  const { pathname, search } = window.location
+  if (pathname.startsWith(normalized) && pathname.length > normalized.length) {
+    const suffix = pathname.slice(normalized.length)
+    const pathPart = suffix.startsWith('/') ? suffix : `/${suffix}`
+    if (pathPart !== '/') {
+      window.location.replace(`${window.location.origin}${normalized}/${search}#${pathPart}`)
+      skipRender = true
+    }
+  }
+}
+
+if (!skipRender) {
+  const routeTree = [
     {
       path: '/login',
       element: <Login />,
@@ -50,21 +68,23 @@ const router = createBrowserRouter(
       ),
       children: routes,
     },
-  ],
-  basename ? { basename } : {}
-)
+  ]
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <ConfigProvider
-      locale={zhCN}
-      theme={{
-        token: {
-          colorPrimary: '#ff4d4f', // 红色主题色
-        },
-      }}
-    >
-      <RouterProvider router={router} />
-    </ConfigProvider>
-  </StrictMode>
-)
+  const createRouter = useHashRouter ? createHashRouter : createBrowserRouter
+  const router = createRouter(routeTree, useHashRouter || !basename ? {} : { basename })
+
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <ConfigProvider
+        locale={zhCN}
+        theme={{
+          token: {
+            colorPrimary: '#ff4d4f', // 红色主题色
+          },
+        }}
+      >
+        <RouterProvider router={router} />
+      </ConfigProvider>
+    </StrictMode>
+  )
+}

@@ -33,6 +33,8 @@ jobs:
         env:
           # 与仓库名一致，访问地址：https://<user>.github.io/<repo>/
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
+          # Hash 路由：深链不再请求 /repo/xxx（避免文档 404）；旧 path 书签会重定向到 #/xxx
+          VITE_HASH_ROUTER: 'true'
         run: npm run build
 
       # SPA 刷新/深链：用 index.html 作为 404，避免子路径 404
