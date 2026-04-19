@@ -19,6 +19,15 @@ import {
   COMMON_WAP_PARAMS,
 } from '@/constants'
 
+declare global {
+  interface Window {
+    /** 天天基金 js 接口回调 */
+    jsonpgz?: (data: RealtimeValuationResponse) => void
+    /** 东财 pingzhongdata 脚本写入的全局变量 */
+    Data_gzTrend?: GzTrendPoint[]
+  }
+}
+
 /**
  * 构建URL参数
  */
@@ -29,35 +38,54 @@ function buildParams(params: Record<string, string | number>): string {
 }
 
 /**
- * 解析 JSONP 响应
+ * 通过 script 加载的接口与全局回调/变量会冲突，必须串行执行
  */
-function parseJsonp<T>(jsonpStr: string): T | null {
-  // 匹配 jsonpgz({...}) 格式
-  const match = jsonpStr.match(/jsonpgz\((.*)\);?/)
-  if (match && match[1]) {
-    try {
-      return JSON.parse(match[1])
-    } catch {
-      return null
-    }
-  }
-  return null
+let scriptTaskChain: Promise<void> = Promise.resolve()
+
+function runScriptTask<T>(task: () => Promise<T>): Promise<T> {
+  const next = scriptTaskChain.then(task)
+  scriptTaskChain = next.then(
+    () => {},
+    () => {}
+  )
+  return next
 }
 
+const JSONP_TIMEOUT_MS = 20_000
+
 /**
- * 获取单个基金的实时估值数据
- * 使用天天基金实时估值接口: https://fundgz.1234567.com.cn/js/{基金代码}.js
+ * 获取单个基金的实时估值数据（JSONP：script 加载，避免生产环境 fetch 被 CORS 拦截）
+ * 接口: https://fundgz.1234567.com.cn/js/{基金代码}.js
  */
-async function fetchRealtimeValuation(fcode: string): Promise<RealtimeValuationResponse | null> {
-  try {
-    const response = await fetch(`${FUND_REALTIME_URL}/js/${fcode}.js?rt=${Date.now()}`, {
-      cache: 'no-store',
-    })
-    const text = await response.text()
-    return parseJsonp<RealtimeValuationResponse>(text)
-  } catch {
-    return null
-  }
+function fetchRealtimeValuation(fcode: string): Promise<RealtimeValuationResponse | null> {
+  return runScriptTask(
+    () =>
+      new Promise(resolve => {
+        const url = `${FUND_REALTIME_URL}/js/${fcode}.js?rt=${Date.now()}`
+        const script = document.createElement('script')
+        let settled = false
+        const prevCallback = window.jsonpgz
+
+        const finish = (value: RealtimeValuationResponse | null) => {
+          if (settled) return
+          settled = true
+          window.clearTimeout(timer)
+          window.jsonpgz = prevCallback
+          script.remove()
+          resolve(value)
+        }
+
+        const timer = window.setTimeout(() => finish(null), JSONP_TIMEOUT_MS)
+
+        window.jsonpgz = (data: RealtimeValuationResponse) => {
+          finish(data)
+        }
+
+        script.onerror = () => finish(null)
+        script.src = url
+        document.head.appendChild(script)
+      })
+  )
 }
 
 /**
@@ -116,46 +144,6 @@ export async function fetchValuationDetail(fcode: string): Promise<ValuationData
 }
 
 /**
- * 解析 pingzhongdata JS 文件内容
- * 提取 Data_gzTrend 等变量
- */
-function parsePingzhongData(jsContent: string): {
-  gzTrend: GzTrendPoint[]
-  fundName: string
-  fundCode: string
-} {
-  const result = {
-    gzTrend: [] as GzTrendPoint[],
-    fundName: '',
-    fundCode: '',
-  }
-
-  try {
-    // 提取 Data_gzTrend（当日估值分时走势）
-    const gzTrendMatch = jsContent.match(/var\s+Data_gzTrend\s*=\s*(\[[\s\S]*?\]);/)
-    if (gzTrendMatch && gzTrendMatch[1]) {
-      result.gzTrend = JSON.parse(gzTrendMatch[1])
-    }
-
-    // 提取基金名称
-    const nameMatch = jsContent.match(/var\s+fS_name\s*=\s*"([^"]+)"/)
-    if (nameMatch && nameMatch[1]) {
-      result.fundName = nameMatch[1]
-    }
-
-    // 提取基金代码
-    const codeMatch = jsContent.match(/var\s+fS_code\s*=\s*"([^"]+)"/)
-    if (codeMatch && codeMatch[1]) {
-      result.fundCode = codeMatch[1]
-    }
-  } catch (error) {
-    console.error('解析 pingzhongdata 失败:', error)
-  }
-
-  return result
-}
-
-/**
  * 获取基金当日估值分时走势数据（实时折线图）
  * 使用 pingzhongdata 接口，包含 Data_gzTrend 字段
  * 注意：请求频率不宜过高，建议使用防抖
@@ -163,35 +151,40 @@ function parsePingzhongData(jsContent: string): {
  * @param fcode 基金代码
  * @returns 估值数据数组，格式为 ValuationData[]
  */
-export async function fetchGzTrend(fcode: string): Promise<ValuationData[]> {
-  try {
-    const response = await fetch(`${FUND_DATA_URL}/pingzhongdata/${fcode}.js?v=${Date.now()}`, {
-      cache: 'no-store',
-      headers: {
-        Referer: 'https://fund.eastmoney.com/',
-      },
-    })
+export function fetchGzTrend(fcode: string): Promise<ValuationData[]> {
+  return runScriptTask(async () => {
+    const url = `${FUND_DATA_URL}/pingzhongdata/${fcode}.js?v=${Date.now()}`
+    const script = document.createElement('script')
+    try {
+      await new Promise<void>((resolve, reject) => {
+        script.async = true
+        script.onload = () => resolve()
+        script.onerror = () => reject(new Error('script load failed'))
+        script.src = url
+        document.head.appendChild(script)
+      })
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-
-    const jsContent = await response.text()
-    const { gzTrend } = parsePingzhongData(jsContent)
-
-    // 转换为 ValuationData 格式
-    return gzTrend.map(point => {
-      const date = new Date(point.x)
-      return {
-        date: date.toLocaleDateString('zh-CN'),
-        time: date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
-        value: point.y.toFixed(4),
+      const gzTrend = window.Data_gzTrend
+      if (!Array.isArray(gzTrend) || gzTrend.length === 0) {
+        return []
       }
-    })
-  } catch (error) {
-    console.error('获取分时估值数据失败:', error)
-    return []
-  }
+
+      return gzTrend.map(point => {
+        const date = new Date(point.x)
+        return {
+          date: date.toLocaleDateString('zh-CN'),
+          time: date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+          value: point.y.toFixed(4),
+        }
+      })
+    } catch (error) {
+      console.error('获取分时估值数据失败:', error)
+      return []
+    } finally {
+      script.remove()
+      delete window.Data_gzTrend
+    }
+  })
 }
 
 /**
