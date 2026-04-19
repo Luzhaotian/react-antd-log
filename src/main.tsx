@@ -25,26 +25,38 @@ dayjs.tz.setDefault('Asia/Shanghai')
 // 首屏标题由统一配置设置（路由切换后由 useDocumentTitle 覆盖）
 document.title = APP_NAME
 
+/** 与 Vite `base` 一致，部署在 GitHub Pages 子路径时需设置 basename */
+function routerBasename(): string | undefined {
+  const base = import.meta.env.BASE_URL
+  if (base === '/') return undefined
+  return base.endsWith('/') ? base.slice(0, -1) : base
+}
+
+const basename = routerBasename()
+
 // 创建 data router，支持 useBlocker 等新特性
-const router = createBrowserRouter([
-  {
-    path: '/login',
-    element: <Login />,
-  },
-  {
-    path: '/',
-    element: (
-      <RequireAuth>
-        <MainLayout />
-      </RequireAuth>
-    ),
-    children: routes,
-  },
-])
+const router = createBrowserRouter(
+  [
+    {
+      path: '/login',
+      element: <Login />,
+    },
+    {
+      path: '/',
+      element: (
+        <RequireAuth>
+          <MainLayout />
+        </RequireAuth>
+      ),
+      children: routes,
+    },
+  ],
+  basename ? { basename } : {}
+)
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ConfigProvider 
+    <ConfigProvider
       locale={zhCN}
       theme={{
         token: {
@@ -54,5 +66,5 @@ createRoot(document.getElementById('root')!).render(
     >
       <RouterProvider router={router} />
     </ConfigProvider>
-  </StrictMode>,
+  </StrictMode>
 )

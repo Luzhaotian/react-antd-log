@@ -14,40 +14,10 @@ import FilePreview from '@/components/FilePreview'
 import AppModal from '@/components/AppModal'
 import FileRenameDrawer from './FileRenameDrawer'
 import { ExportModal, getFileRenameColumns } from './components'
-import {
-  getFileRenameList,
-  createFileRenameItem,
-  updateFileRenameItem,
-  deleteFileRenameItem,
-  batchDeleteFileRenameItems,
-  deleteAllFileRenameItems,
-} from '@/api/fileRename'
-import type { FileRenameItem, FileRenameSavePayload, FileRenameTemplateConfig } from '@/types'
-import { createItem } from '@/utils/pages/Tools/FileRename'
+import type { FileRenameItem, FileRenameSavePayload } from '@/types'
+import { createItem, loadList, saveList } from '@/utils/pages/Tools/FileRename'
 import { isSupportedPreviewFile } from '@/utils/components/filePreview'
 import { DEFAULT_EXPORT_FILENAME } from '@/constants'
-
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.readAsDataURL(file)
-    reader.onload = () => {
-      const base64 = (reader.result as string).split(',')[1]
-      resolve(base64)
-    }
-    reader.onerror = reject
-  })
-}
-
-function base64ToFile(base64: string, originalName: string, fileType?: string): File {
-  const byteCharacters = atob(base64)
-  const byteNumbers = new Array(byteCharacters.length)
-  for (let i = 0; i < byteCharacters.length; i++) {
-    byteNumbers[i] = byteCharacters.charCodeAt(i)
-  }
-  const byteArray = new Uint8Array(byteNumbers)
-  return new File([byteArray], originalName, { type: fileType || '' })
-}
 
 export default function FileRename() {
   const [list, setList] = useState<FileRenameItem[]>([])
@@ -64,17 +34,7 @@ export default function FileRename() {
   const fetchList = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await getFileRenameList()
-      const items: FileRenameItem[] = data.map(dto => ({
-        id: String(dto.id),
-        file: dto.fileDataBase64
-          ? base64ToFile(dto.fileDataBase64, dto.originalName, dto.fileType)
-          : new File([], dto.originalName, { type: dto.fileType || '' }),
-        newName: dto.newName,
-        ...(dto.templateConfig && {
-          templateConfig: dto.templateConfig as FileRenameTemplateConfig,
-        }),
-      }))
+      const items = await loadList()
       setList(items)
     } catch {
       message.error('加载列表失败')
@@ -100,16 +60,11 @@ export default function FileRename() {
         }
         try {
           const item = createItem(file)
-          const base64 = await fileToBase64(file)
-          await createFileRenameItem({
-            originalName: file.name,
-            newName: item.newName,
-            fileType: file.type || undefined,
-            fileSize: file.size,
-            fileDataBase64: base64,
-            templateConfig: item.templateConfig,
+          setList(prev => {
+            const next = [...prev, item]
+            void saveList(next).catch(() => message.error('本地保存失败'))
+            return next
           })
-          await fetchList()
           message.success('上传成功')
         } catch (e) {
           message.error(e instanceof Error ? e.message : '上传失败')
@@ -119,7 +74,7 @@ export default function FileRename() {
       fileList: [],
       showUploadList: false,
     }),
-    [fetchList]
+    []
   )
 
   const folderUploadProps: UploadProps = useMemo(
@@ -133,16 +88,11 @@ export default function FileRename() {
         }
         try {
           const item = createItem(file)
-          const base64 = await fileToBase64(file)
-          await createFileRenameItem({
-            originalName: file.name,
-            newName: item.newName,
-            fileType: file.type || undefined,
-            fileSize: file.size,
-            fileDataBase64: base64,
-            templateConfig: item.templateConfig,
+          setList(prev => {
+            const next = [...prev, item]
+            void saveList(next).catch(() => message.error('本地保存失败'))
+            return next
           })
-          await fetchList()
         } catch (e) {
           message.error(e instanceof Error ? e.message : '上传失败')
         }
@@ -151,7 +101,7 @@ export default function FileRename() {
       fileList: [],
       showUploadList: false,
     }),
-    [fetchList]
+    []
   )
 
   const handleEdit = useCallback((item: FileRenameItem) => {
@@ -169,17 +119,13 @@ export default function FileRename() {
       if (!editingItem) return
       const { newName, ...templateConfig } = payload
       try {
-        const id = Number(editingItem.id)
-        const base64 = editingItem.file.size > 0 ? await fileToBase64(editingItem.file) : undefined
-        await updateFileRenameItem(id, {
-          originalName: editingItem.file.name,
-          newName,
-          fileType: editingItem.file.type || undefined,
-          fileSize: editingItem.file.size || undefined,
-          ...(base64 && { fileDataBase64: base64 }),
-          templateConfig,
+        setList(prev => {
+          const next = prev.map(it =>
+            it.id === editingItem.id ? { ...it, newName, templateConfig } : it
+          )
+          void saveList(next).catch(() => message.error('本地保存失败'))
+          return next
         })
-        await fetchList()
         message.success('已更新新文件名')
       } catch (e) {
         message.error(e instanceof Error ? e.message : '更新失败')
@@ -187,7 +133,7 @@ export default function FileRename() {
       setEditingItem(null)
       setDrawerOpen(false)
     },
-    [editingItem, fetchList]
+    [editingItem]
   )
 
   const handleCopy = useCallback(async (newName: string) => {
@@ -211,8 +157,11 @@ export default function FileRename() {
 
   const handleDelete = useCallback(async (item: FileRenameItem) => {
     try {
-      await deleteFileRenameItem(Number(item.id))
-      setList(prev => prev.filter(it => it.id !== item.id))
+      setList(prev => {
+        const next = prev.filter(it => it.id !== item.id)
+        void saveList(next).catch(() => message.error('本地保存失败'))
+        return next
+      })
       setSelectedRowKeys(prev => prev.filter(key => key !== item.id))
       message.success('已删除')
     } catch (e) {
@@ -223,10 +172,13 @@ export default function FileRename() {
   const handleBatchDelete = useCallback(async () => {
     if (selectedRowKeys.length === 0) return
     try {
-      await batchDeleteFileRenameItems(selectedRowKeys.map(Number))
-      setList(prev => prev.filter(it => !selectedRowKeys.includes(it.id)))
-      setSelectedRowKeys([])
+      setList(prev => {
+        const next = prev.filter(it => !selectedRowKeys.includes(it.id))
+        void saveList(next).catch(() => message.error('本地保存失败'))
+        return next
+      })
       message.success(`成功删除 ${selectedRowKeys.length} 条记录`)
+      setSelectedRowKeys([])
     } catch (e) {
       message.error(e instanceof Error ? e.message : '批量删除失败')
     }
@@ -234,9 +186,9 @@ export default function FileRename() {
 
   const handleClear = useCallback(async () => {
     try {
-      await deleteAllFileRenameItems()
       setList([])
       setSelectedRowKeys([])
+      await saveList([])
       message.success('已清空列表')
     } catch (e) {
       message.error(e instanceof Error ? e.message : '清空失败')
@@ -283,7 +235,7 @@ export default function FileRename() {
         message.success(`导出成功，共 ${toExport.length} 个文件`)
         setExportModalOpen(false)
         exportForm.resetFields()
-      } catch (e) {
+      } catch {
         message.error('导出失败')
       } finally {
         setExportLoading(false)
@@ -306,7 +258,7 @@ export default function FileRename() {
   return (
     <PageDetail
       title="文件重命名"
-      description="上传多个文件或文件夹，为每条设置新文件名后可导出为 zip 或复制新文件名；列表数据自动持久化"
+      description="上传多个文件或文件夹，为每条设置新文件名后可导出为 zip 或复制新文件名；列表数据保存在本机 IndexedDB"
       contentClassName="h-full"
       extra={
         <Space>

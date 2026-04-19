@@ -4,7 +4,9 @@ import UnoCSS from 'unocss/vite'
 import path from 'path'
 
 // https://vite.dev/config/
+// 部署到 GitHub Pages 子路径时由 CI 注入 VITE_BASE_PATH，例如 /react-antd-log/
 export default defineConfig({
+  base: process.env.VITE_BASE_PATH || '/',
   plugins: [react(), UnoCSS()],
   resolve: {
     alias: {

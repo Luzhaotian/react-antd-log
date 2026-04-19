@@ -2,12 +2,7 @@ const LOGIN_STATUS_KEY = 'isLoggedIn'
 const AUTH_TOKEN_KEY = 'token'
 const AUTH_USERNAME_KEY = 'username'
 
-export const DEFAULT_ACCOUNT = 'admin'
-export const DEFAULT_PASSWORD = '123456'
-
-export function validateCredentials(account: string, password: string) {
-  return account === DEFAULT_ACCOUNT && password === DEFAULT_PASSWORD
-}
+const DEFAULT_DISPLAY_NAME = '用户'
 
 export function isLoggedIn() {
   const status = localStorage.getItem(LOGIN_STATUS_KEY) === 'true'
@@ -36,5 +31,5 @@ export function getAuthToken() {
 }
 
 export function getAuthUsername() {
-  return localStorage.getItem(AUTH_USERNAME_KEY) || DEFAULT_ACCOUNT
+  return localStorage.getItem(AUTH_USERNAME_KEY) || DEFAULT_DISPLAY_NAME
 }

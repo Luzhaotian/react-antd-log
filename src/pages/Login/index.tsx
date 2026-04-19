@@ -3,8 +3,10 @@ import { useLocation, useNavigate, Navigate } from 'react-router-dom'
 import { Button, Card, Form, Input, Typography, message } from 'antd'
 import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import { useAsyncFn } from 'react-use'
-import { login } from '@/api/auth'
-import { DEFAULT_ACCOUNT, DEFAULT_PASSWORD, isLoggedIn, setAuthSession } from '@/utils'
+import { isLoggedIn, setAuthSession } from '@/utils'
+
+/** 模拟接口耗时（毫秒） */
+const MOCK_LOGIN_DELAY_MS = 450
 
 interface LoginFormValues {
   username: string
@@ -21,19 +23,16 @@ function Login() {
   }, [location.state])
 
   const [state, doLogin] = useAsyncFn(async (values: LoginFormValues) => {
-    const data = await login({
-      username: values.username,
-      password: values.password,
-    })
-
-    setAuthSession(data.token, data.username)
+    await new Promise<void>(resolve => setTimeout(resolve, MOCK_LOGIN_DELAY_MS))
+    const username = values.username?.trim() || '用户'
+    const token = `mock-${Date.now()}`
+    setAuthSession(token, username)
     return fromPath
   })
 
   const handleSubmit = async (values: LoginFormValues) => {
     try {
       const path = await doLogin(values)
-
       messageApi.success('登录成功')
       navigate(path, { replace: true })
     } catch (error) {
@@ -54,30 +53,21 @@ function Login() {
           <Typography.Title level={3} className="!mb-1">
             欢迎登录
           </Typography.Title>
-          <Typography.Text type="secondary">请输入账号和密码继续使用系统</Typography.Text>
+          <Typography.Text type="secondary">
+            本地演示：任意账号密码均可登录（模拟接口延时）
+          </Typography.Text>
         </div>
         <Form<LoginFormValues>
           layout="vertical"
           onFinish={handleSubmit}
-          initialValues={{
-            username: DEFAULT_ACCOUNT,
-            password: DEFAULT_PASSWORD,
-          }}
+          initialValues={{ username: '', password: '' }}
           autoComplete="off"
         >
-          <Form.Item
-            label="账号"
-            name="username"
-            rules={[{ required: true, message: '请输入账号' }]}
-          >
-            <Input prefix={<UserOutlined />} placeholder="请输入账号" />
+          <Form.Item label="账号" name="username">
+            <Input prefix={<UserOutlined />} placeholder="可任意填写" allowClear />
           </Form.Item>
-          <Form.Item
-            label="密码"
-            name="password"
-            rules={[{ required: true, message: '请输入密码' }]}
-          >
-            <Input.Password prefix={<LockOutlined />} placeholder="请输入密码" />
+          <Form.Item label="密码" name="password">
+            <Input.Password prefix={<LockOutlined />} placeholder="可任意填写" allowClear />
           </Form.Item>
           <Form.Item className="!mb-1">
             <Button type="primary" htmlType="submit" block size="large" loading={state.loading}>

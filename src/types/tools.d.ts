@@ -56,40 +56,6 @@ export interface FileRenameTemplateConfig {
   templateDateNumType: string
 }
 
-/** 文件重命名模板配置 DTO（后端数据传输对象） */
-export interface FileRenameTemplateConfigDTO {
-  templateType?: string
-  templateDate?: string | null
-  templateValue?: number | null
-  templateMonth?: string | null
-  templateCustom?: string
-  templateNamePrefix?: string
-  templateDateNumType?: string
-}
-
-/** 文件重命名项 DTO（后端数据传输对象） */
-export interface FileRenameItemDTO {
-  id: number
-  originalName: string
-  newName: string
-  fileType?: string
-  fileSize?: number
-  fileDataBase64?: string
-  templateConfig?: FileRenameTemplateConfigDTO
-  createdAt: string
-  updatedAt: string
-}
-
-/** 创建/更新文件重命名项的请求参数 */
-export interface CreateFileRenameParams {
-  originalName: string
-  newName: string
-  fileType?: string
-  fileSize?: number
-  fileDataBase64?: string
-  templateConfig?: FileRenameTemplateConfigDTO
-}
-
 /** 组件尺寸类型（与 constants/tools COMPONENT_SIZE_TYPE 一致） */
 export type ComponentSize = 'small' | 'middle' | 'large'
 
