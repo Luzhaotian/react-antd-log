@@ -3,7 +3,8 @@
  *
  * - 开发（Vite dev）：使用以 `/` 开头的路径，走 `vite.config.ts` 里 proxy，避免浏览器跨域。
  * - 生产（GitHub Pages 等静态托管）：无 Node 代理，必须使用完整源站 URL，否则会请求到
- *   `https://<pages 域名>/fundgz/...` 导致 404。
+ *   `https://<pages 域名>/fundgz/...` 导致 404。东财 fundmobapi / fundsuggest 等在生产环境由
+ *   `src/api/fund.ts` 通过 JSONP（`<script>` + `callback`）请求，避免 fetch 被 CORS 拦截。
  *
  * 源站与 vite 代理 rewrite 保持一致。
  */

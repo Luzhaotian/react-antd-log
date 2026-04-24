@@ -54,6 +54,41 @@ function runScriptTask<T>(task: () => Promise<T>): Promise<T> {
 const JSONP_TIMEOUT_MS = 20_000
 
 /**
+ * fundmobapi 各 ashx 接口支持 callback JSONP，线上静态页无法使用 fetch（无 CORS）
+ */
+function fetchFundMobApiJsonp<T>(pathWithQuery: string): Promise<T | null> {
+  const path = pathWithQuery.startsWith('/') ? pathWithQuery : `/${pathWithQuery}`
+  return runScriptTask(
+    () =>
+      new Promise(resolve => {
+        const cbName = `__emFundMob_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
+        const script = document.createElement('script')
+        let settled = false
+
+        const finish = (payload: T | null) => {
+          if (settled) return
+          settled = true
+          window.clearTimeout(timer)
+          Reflect.deleteProperty(window, cbName as keyof Window & string)
+          script.remove()
+          resolve(payload)
+        }
+
+        const timer = window.setTimeout(() => finish(null), JSONP_TIMEOUT_MS)
+
+        ;(window as unknown as Record<string, (data: T) => void>)[cbName] = (data: T) => {
+          finish(data)
+        }
+
+        script.onerror = () => finish(null)
+        const sep = path.includes('?') ? '&' : '?'
+        script.src = `${FUND_API_URL}${path}${sep}callback=${encodeURIComponent(cbName)}`
+        document.head.appendChild(script)
+      })
+  )
+}
+
+/**
  * 获取单个基金的实时估值数据（JSONP：script 加载，避免生产环境 fetch 被 CORS 拦截）
  * 接口: https://fundgz.1234567.com.cn/js/{基金代码}.js
  */
@@ -124,13 +159,12 @@ export async function fetchValuationDetail(fcode: string): Promise<ValuationData
     _: Date.now(),
   })
 
-  const response = await fetch(
-    `${FUND_API_URL}/FundMApi/FundVarietieValuationDetail.ashx?${params}`
+  const data = await fetchFundMobApiJsonp<{ Datas?: string[] | null }>(
+    `/FundMApi/FundVarietieValuationDetail.ashx?${params}`
   )
-  const data = await response.json()
 
   // 解析字符串数组数据
-  if (data.Datas && Array.isArray(data.Datas)) {
+  if (data?.Datas && Array.isArray(data.Datas)) {
     return data.Datas.map((item: string) => {
       const parts = item.split(',')
       return {
@@ -216,12 +250,14 @@ export async function fetchYieldData(
     _: Date.now(),
   })
 
-  const response = await fetch(`${FUND_API_URL}/FundMApi/FundYieldDiagramNew.ashx?${params}`)
-  const data = await response.json()
+  const data = await fetchFundMobApiJsonp<{
+    Datas?: YieldData[]
+    Expansion?: { INDEXNAME?: string }
+  }>(`/FundMApi/FundYieldDiagramNew.ashx?${params}`)
 
   return {
-    data: data.Datas || [],
-    indexName: data.Expansion?.INDEXNAME || '基准指数',
+    data: data?.Datas || [],
+    indexName: data?.Expansion?.INDEXNAME || '基准指数',
   }
 }
 
@@ -239,9 +275,10 @@ export async function fetchNetValueData(
     _: Date.now(),
   })
 
-  const response = await fetch(`${FUND_API_URL}/FundMApi/FundNetDiagram.ashx?${params}`)
-  const data = await response.json()
-  return data.Datas || []
+  const data = await fetchFundMobApiJsonp<{ Datas?: NetValueData[] }>(
+    `/FundMApi/FundNetDiagram.ashx?${params}`
+  )
+  return data?.Datas || []
 }
 
 /**
@@ -254,9 +291,10 @@ export async function fetchFundDetail(fcode: string): Promise<FundDetailInfo | n
     _: Date.now(),
   })
 
-  const response = await fetch(`${FUND_API_URL}/FundMApi/FundBaseTypeInformation.ashx?${params}`)
-  const data = await response.json()
-  return data.Datas || null
+  const data = await fetchFundMobApiJsonp<{ Datas?: FundDetailInfo | null }>(
+    `/FundMApi/FundBaseTypeInformation.ashx?${params}`
+  )
+  return data?.Datas ?? null
 }
 
 /**
@@ -271,12 +309,14 @@ export async function fetchFundPosition(
     _: Date.now(),
   })
 
-  const response = await fetch(`${FUND_API_URL}/FundMNewApi/FundMNInverstPosition?${params}`)
-  const data = await response.json()
+  const data = await fetchFundMobApiJsonp<{
+    Datas?: { fundStocks?: FundStock[] }
+    Expansion?: string
+  }>(`/FundMNewApi/FundMNInverstPosition?${params}`)
 
   return {
-    stocks: data.Datas?.fundStocks || [],
-    date: data.Expansion || '',
+    stocks: data?.Datas?.fundStocks || [],
+    date: data?.Expansion || '',
   }
 }
 
@@ -290,9 +330,10 @@ export async function fetchManagerList(fcode: string): Promise<FundManager[]> {
     _: Date.now(),
   })
 
-  const response = await fetch(`${FUND_API_URL}/FundMApi/FundManagerList.ashx?${params}`)
-  const data = await response.json()
-  return data.Datas || []
+  const data = await fetchFundMobApiJsonp<{ Datas?: FundManager[] }>(
+    `/FundMApi/FundManagerList.ashx?${params}`
+  )
+  return data?.Datas || []
 }
 
 /**
@@ -305,17 +346,19 @@ export async function fetchManagerDetail(fcode: string): Promise<FundManager[]> 
     _: Date.now(),
   })
 
-  const response = await fetch(`${FUND_API_URL}/FundMApi/FundMangerDetail.ashx?${params}`)
-  const data = await response.json()
-  return data.Datas || []
+  const data = await fetchFundMobApiJsonp<{ Datas?: FundManager[] }>(
+    `/FundMApi/FundMangerDetail.ashx?${params}`
+  )
+  return data?.Datas || []
 }
 
 /**
  * 搜索基金（用于联想输入）
+ * JSONP：FundSearchAPI 无 CORS，生产环境 fetch 会被浏览器拦截（如 GitHub Pages）
  * @param keyword 搜索关键词（支持代码、名称、拼音）
  */
-export async function searchFund(keyword: string): Promise<FundSearchResult[]> {
-  if (!keyword.trim()) return []
+export function searchFund(keyword: string): Promise<FundSearchResult[]> {
+  if (!keyword.trim()) return Promise.resolve([])
 
   const params = buildParams({
     m: 1, // 搜索基金
@@ -323,11 +366,33 @@ export async function searchFund(keyword: string): Promise<FundSearchResult[]> {
     _: Date.now(),
   })
 
-  try {
-    const response = await fetch(`${FUND_SUGGEST_URL}/FundSearch/api/FundSearchAPI.ashx?${params}`)
-    const data = await response.json()
-    return data.Datas || []
-  } catch {
-    return []
-  }
+  return runScriptTask(
+    () =>
+      new Promise(resolve => {
+        const cbName = `__emFundSearch_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
+        const script = document.createElement('script')
+        let settled = false
+
+        const finish = (rows: FundSearchResult[]) => {
+          if (settled) return
+          settled = true
+          window.clearTimeout(timer)
+          Reflect.deleteProperty(window, cbName as keyof Window & string)
+          script.remove()
+          resolve(rows)
+        }
+
+        const timer = window.setTimeout(() => finish([]), JSONP_TIMEOUT_MS)
+
+        ;(window as unknown as Record<string, (payload: { Datas?: FundSearchResult[] }) => void>)[
+          cbName
+        ] = payload => {
+          finish(payload?.Datas || [])
+        }
+
+        script.onerror = () => finish([])
+        script.src = `${FUND_SUGGEST_URL}/FundSearch/api/FundSearchAPI.ashx?${params}&callback=${encodeURIComponent(cbName)}`
+        document.head.appendChild(script)
+      })
+  )
 }
