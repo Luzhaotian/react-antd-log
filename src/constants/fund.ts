@@ -11,13 +11,6 @@ export const TIME_RANGE = {
   FIVE_N: '5n',
 } as const
 
-/** 图表类型 */
-export const CHART_TYPE = {
-  VALUATION: 'valuation',
-  YIELD: 'yield',
-  NET_VALUE: 'netValue',
-} as const
-
 /** 默认监控的基金代码 */
 export const DEFAULT_FUND_CODES: string[] = [
   /** 南方中证半导体产业指数发起C */
@@ -46,9 +39,6 @@ export const DEFAULT_FUND_CODES: string[] = [
 
 /** 刷新间隔（秒） */
 export const REFRESH_INTERVAL = 30
-
-/**防抖延迟时间（毫秒）- 防止请求过于频繁被封 */
-export const DEBOUNCE_DELAY = 500
 
 /** 时间范围选项 */
 export const TIME_RANGE_OPTIONS: Option<TimeRange, string>[] = [

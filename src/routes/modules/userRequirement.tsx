@@ -4,6 +4,7 @@ import type { ExtendedRouteObject } from '@/types'
 
 const CarLoanCalculatorList = lazy(() => import('@/pages/UserRequirement/CarLoanCalculatorList'))
 const MortgageCalculatorList = lazy(() => import('@/pages/UserRequirement/MortgageCalculatorList'))
+const LoanTracker = lazy(() => import('@/pages/UserRequirement/LoanTracker'))
 
 const userRequirementRoutes: ExtendedRouteObject[] = [
   {
@@ -28,8 +29,15 @@ const userRequirementRoutes: ExtendedRouteObject[] = [
         },
       },
       {
+        path: 'loan-tracker',
+        element: <LoanTracker />,
+        meta: {
+          name: '房贷还款追踪',
+        },
+      },
+      {
         index: true,
-        element: <MortgageCalculatorList />,
+        element: <LoanTracker />,
       },
     ],
   },

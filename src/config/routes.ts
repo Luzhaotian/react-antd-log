@@ -1,46 +1,7 @@
 import { routes } from '@/routes'
 import type { ExtendedRouteObject } from '@/types'
 import { APP_NAME } from '@/constants'
-
-/**
- * 构建完整路径
- */
-function buildFullPath(parentPath: string, routePath: string | undefined): string {
-  if (!routePath) return parentPath
-
-  if (routePath.startsWith('/')) {
-    return routePath
-  }
-
-  if (parentPath === '/') {
-    return `/${routePath}`
-  }
-
-  if (routePath === '') {
-    return parentPath
-  }
-
-  return `${parentPath}/${routePath}`
-}
-
-/**
- * 检查路径是否匹配（支持动态路由）
- */
-function isPathMatch(routePath: string, pathname: string): boolean {
-  // 精确匹配
-  if (routePath === pathname) {
-    return true
-  }
-
-  // 处理动态路由（如 /user/detail/:id 或 /user/detail/:id?）
-  if (routePath.includes(':')) {
-    const pattern = routePath.replace(/:[^/]+/g, '[^/]+').replace(/\?/g, '')
-    const regex = new RegExp(`^${pattern}$`)
-    return regex.test(pathname)
-  }
-
-  return false
-}
+import { buildFullPath, isPathMatch } from '@/utils'
 
 /**
  * 从路由配置中查找匹配的路由

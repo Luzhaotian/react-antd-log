@@ -20,5 +20,7 @@ export * from './components'
 export * from './layout'
 /** 用户需求相关常量 */
 export * from './userRequirement'
+/** 房贷还款追踪相关常量 */
+export * from './loanTracker'
 /** IndexedDB 存储 key 统一管理 */
 export * from './idbKeys'

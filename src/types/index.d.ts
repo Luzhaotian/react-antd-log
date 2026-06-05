@@ -17,3 +17,5 @@ export * from './components'
 export * from './layout'
 /** 用户需求相关类型 */
 export * from './userRequirement'
+/** 房贷还款追踪相关类型 */
+export * from './loanTracker'

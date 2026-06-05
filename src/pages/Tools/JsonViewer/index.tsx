@@ -40,61 +40,12 @@ function JsonViewerPro() {
     }
   }, [inputJson])
 
-  // 格式化 JSON
-  // const handleFormat = useCallback(() => {
-  //   const trimmedInput = inputJson.trim()
-  //   if (!trimmedInput) {
-  //     message.warning('请输入 JSON 数据')
-  //     return
-  //   }
-
-  //   try {
-  //     const parsed = JSON.parse(trimmedInput)
-  //     setInputJson(JSON.stringify(parsed, null, 2))
-  //     message.success('格式化成功')
-  //   } catch {
-  //     message.error('JSON 格式错误，无法格式化')
-  //   }
-  // }, [inputJson])
-
-  // 压缩 JSON
-  // const handleMinify = useCallback(() => {
-  //   const trimmedInput = inputJson.trim()
-  //   if (!trimmedInput) {
-  //     message.warning('请输入 JSON 数据')
-  //     return
-  //   }
-
-  //   try {
-  //     const parsed = JSON.parse(trimmedInput)
-  //     setInputJson(JSON.stringify(parsed))
-  //     message.success('压缩成功')
-  //   } catch {
-  //     message.error('JSON 格式错误，无法压缩')
-  //   }
-  // }, [inputJson])
-
-  // 清空
   const handleClear = useCallback(() => {
     setInputJson('')
     setParsedData(null)
     setParseError(null)
     setSearchKeyword('')
   }, [])
-
-  // 复制
-  // const handleCopy = useCallback(async () => {
-  //   if (!inputJson) {
-  //     message.warning('没有可复制的内容')
-  //     return
-  //   }
-  //   try {
-  //     await navigator.clipboard.writeText(inputJson)
-  //     message.success('已复制到剪贴板')
-  //   } catch {
-  //     message.error('复制失败')
-  //   }
-  // }, [inputJson])
 
   // 文件上传配置
   const uploadProps: UploadProps = {

@@ -10,5 +10,7 @@ export * from './Tools/JsonViewer'
 export * from './UserRequirement/MortgageCalculator'
 /** 用户需求 - 房贷计算导出 */
 export * from './UserRequirement/exportMortgage'
+/** 用户需求 - 房贷还款追踪 */
+export * from './UserRequirement/loanTracker'
 /** 二维码管理相关工具 */
 export * from './Tools/QrCode'

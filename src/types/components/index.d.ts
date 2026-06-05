@@ -13,9 +13,6 @@ export * from './listPage'
 /** 详情页组件 */
 export * from './pageDetail'
 
-/** 分页组件 */
-export * from './pagination'
-
 /** 搜索栏组件 */
 export * from './searchBar'
 
