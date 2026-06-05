@@ -64,7 +64,10 @@ function SortableRow({ children, ...props }: SortableRowProps) {
   }
 
   const contextValue = useMemo<RowContextProps>(
-    () => ({ setActivatorNodeRef, listeners }),
+    () => ({
+      setActivatorNodeRef,
+      listeners: listeners as Record<string, (...args: unknown[]) => void> | undefined,
+    }),
     [setActivatorNodeRef, listeners]
   )
 
