@@ -126,13 +126,7 @@ function ChartSvg() {
   )
 }
 
-function TabItem({
-  children,
-  active,
-}: {
-  children: ReactNode
-  active?: boolean
-}) {
+function TabItem({ children, active }: { children: ReactNode; active?: boolean }) {
   return (
     <div
       style={{
@@ -370,7 +364,7 @@ export default function DashboardPage() {
                   color: '#828282',
                 }}
               >
-                {['$50K', '$45K', '$40K', '$35K', '$30K'].map((t) => (
+                {['$50K', '$45K', '$40K', '$35K', '$30K'].map(t => (
                   <span key={t}>{t}</span>
                 ))}
               </div>
@@ -494,7 +488,12 @@ export default function DashboardPage() {
             <TabItem>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
                 <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M16 16l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <path
+                  d="M16 16l4 4"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
               </svg>
             </TabItem>
             <TabItem>
@@ -520,7 +519,12 @@ export default function DashboardPage() {
                   stroke="currentColor"
                   strokeWidth="1.5"
                 />
-                <path d="M8 10h8M8 14h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <path
+                  d="M8 10h8M8 14h5"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
               </svg>
             </TabItem>
           </div>

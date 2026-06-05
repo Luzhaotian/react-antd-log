@@ -11,7 +11,14 @@ const BORDER = '#e6e6e6'
 
 function ChevronRight() {
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden style={{ flexShrink: 0 }}>
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      aria-hidden
+      style={{ flexShrink: 0 }}
+    >
       <path
         d="M8 5l5 5-5 5"
         stroke="#000000"
@@ -163,7 +170,9 @@ function CheckoutPage() {
             boxSizing: 'border-box',
           }}
         >
-          <div style={{ position: 'absolute', left: INSET, top: '50%', transform: 'translateY(-50%)' }}>
+          <div
+            style={{ position: 'absolute', left: INSET, top: '50%', transform: 'translateY(-50%)' }}
+          >
             <ChevronLeft onClick={onBack} />
           </div>
           <h1
@@ -298,10 +307,7 @@ function CheckoutPage() {
               </span>
             </div>
 
-            {[
-              { price: '$10.99' },
-              { price: '$8.99' },
-            ].map((row, idx) => (
+            {[{ price: '$10.99' }, { price: '$8.99' }].map((row, idx) => (
               <div
                 key={idx}
                 style={{

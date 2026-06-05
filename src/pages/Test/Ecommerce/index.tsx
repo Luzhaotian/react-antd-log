@@ -88,7 +88,12 @@ function IconFollowing() {
     <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
       <circle cx="6" cy="6" r="2.2" fill="#000000" />
       <circle cx="12" cy="6" r="2.2" fill="#000000" />
-      <path d="M3 14c0-2.2 2-4 4.5-4s4.5 1.8 4.5 4" stroke="#000000" strokeWidth="1.2" strokeLinecap="round" />
+      <path
+        d="M3 14c0-2.2 2-4 4.5-4s4.5 1.8 4.5 4"
+        stroke="#000000"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
     </svg>
   )
 }
@@ -148,15 +153,7 @@ function Pill({
   )
 }
 
-function PlaceholderImg({
-  w,
-  h,
-  radius,
-}: {
-  w: string
-  h: string
-  radius: string
-}) {
+function PlaceholderImg({ w, h, radius }: { w: string; h: string; radius: string }) {
   return (
     <div
       style={{
@@ -170,13 +167,7 @@ function PlaceholderImg({
   )
 }
 
-function TabIcon({
-  children,
-  active,
-}: {
-  children: ReactNode
-  active?: boolean
-}) {
+function TabIcon({ children, active }: { children: ReactNode; active?: boolean }) {
   return (
     <div
       style={{
@@ -316,7 +307,7 @@ function EcommercePage() {
                   alignItems: 'center',
                 }}
               >
-                {[0, 1, 2, 3, 4].map((i) => (
+                {[0, 1, 2, 3, 4].map(i => (
                   <span
                     key={i}
                     style={{
@@ -475,7 +466,12 @@ function EcommercePage() {
             <TabIcon>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
                 <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M16 16l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <path
+                  d="M16 16l4 4"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
               </svg>
             </TabIcon>
             <TabIcon>

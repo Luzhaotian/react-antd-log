@@ -5,10 +5,7 @@ const { Paragraph } = Typography
 
 function Settings() {
   return (
-    <PageDetail
-      title="设置"
-      description="系统配置与偏好"
-    >
+    <PageDetail title="设置" description="系统配置与偏好">
       <Card>
         <Paragraph>这是设置首页，您可以在这里进行各种配置。</Paragraph>
         <Paragraph>请使用左侧菜单导航到具体的设置页面：</Paragraph>

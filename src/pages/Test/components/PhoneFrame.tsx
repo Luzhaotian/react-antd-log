@@ -8,8 +8,7 @@ export const PHONE_H_EM = 54.625
 /** 402 / 16 */
 export const PHONE_W_EM = 25.125
 
-const font =
-  'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+const font = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
 
 export function StatusBar() {
   return (
@@ -55,10 +54,7 @@ export function StatusBar() {
           title="Recording"
         />
         <svg width="17" height="11" viewBox="0 0 17 11" aria-hidden style={{ display: 'block' }}>
-          <path
-            fill="#000000"
-            d="M1 7h2v3H1V7zm4-2h2v5H5V5zm4-2h2v7H9V3zm4-2h2v9h-2V1z"
-          />
+          <path fill="#000000" d="M1 7h2v3H1V7zm4-2h2v5H5V5zm4-2h2v7H9V3zm4-2h2v9h-2V1z" />
         </svg>
         <svg width="16" height="11" viewBox="0 0 16 11" aria-hidden style={{ display: 'block' }}>
           <path

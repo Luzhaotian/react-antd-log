@@ -77,16 +77,6 @@ export interface FundDetailInfo {
   FUNDBONUS?: FundBonus
 }
 
-/** 估值数据 */
-export interface ValuationData {
-  /** 日期 */
-  date: string
-  /** 时间 */
-  time: string
-  /** 值 */
-  value: string
-}
-
 /** 收益率数据 */
 export interface YieldData {
   /** 日期 */
@@ -148,9 +138,6 @@ export interface FundManager {
 /** 时间范围类型（与 constants/fund TIME_RANGE 一致） */
 export type TimeRange = 'y' | '3y' | '6y' | 'n' | '3n' | '5n'
 
-/** 图表类型（与 constants/fund CHART_TYPE 一致） */
-export type ChartType = 'valuation' | 'yield' | 'netValue'
-
 /** 实时估值 API 返回的数据结构 */
 export interface RealtimeValuationResponse {
   /** 基金代码 */
@@ -199,33 +186,26 @@ export interface FundSearchResult {
   FundBaseInfo?: FundBaseInfo
 }
 
-/** 当日估值分时走势数据点 */
-export interface GzTrendPoint {
-  /** x坐标 */
+/** pingzhongdata Data_netWorthTrend 单条数据 */
+export interface NetWorthTrendPoint {
+  /** 日期时间戳 (ms) */
   x: number
-  /** y坐标 */
+  /** 单位净值 */
   y: number
+  /** 累计收益率 */
+  equityReturn: number
+  /** 每份分红金额 */
+  unitMoney: string
 }
 
-/** pingzhongdata 接口返回的部分数据结构 */
-export interface PingzhongData {
-  /** 估值分时走势数据 */
-  Data_gzTrend?: GzTrendPoint[]
-  /** 净值分时走势数据 */
-  Data_netWorthTrend?: Array<{
-    /** x坐标 */
-    x: number
-    /** y坐标 */
-    y: number
-    /** 净值收益率 */
-    equityReturn: number
-    /** 单位金额 */
-    unitMoney: string
-  }>
+/** pingzhongdata 接口返回的有用数据 */
+export interface PingzhongResponse {
+  /** 净值走势数据 */
+  netWorthTrend: NetWorthTrendPoint[]
   /** 基金名称 */
-  fS_name?: string
+  fundName: string
   /** 基金代码 */
-  fS_code?: string
+  fundCode: string
 }
 
 /** 图表弹窗组件属性 */
@@ -283,7 +263,7 @@ export interface RowContextProps {
   /** 设置激活节点引用 */
   setActivatorNodeRef?: (element: HTMLElement | null) => void
   /** 监听器 */
-  listeners?: Record<string, Function>
+  listeners?: Record<string, (...args: unknown[]) => void>
 }
 
 /** 可排序行组件 */

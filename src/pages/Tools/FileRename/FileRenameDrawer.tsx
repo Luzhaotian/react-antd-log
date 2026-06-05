@@ -43,20 +43,29 @@ function FileRenameDrawer({
   )
   const [templateValue, setTemplateValue] = useState<number | null>(defaultConfig.templateValue)
   const [templateMonth, setTemplateMonth] = useState<Dayjs | null>(() =>
-    defaultConfig.templateMonth ? dayjs(defaultConfig.templateMonth) : dayjs().startOf(PICKER_TYPE.MONTH)
+    defaultConfig.templateMonth
+      ? dayjs(defaultConfig.templateMonth)
+      : dayjs().startOf(PICKER_TYPE.MONTH)
   )
   const [templateCustom, setTemplateCustom] = useState<string>(defaultConfig.templateCustom)
-  const [templateNamePrefix, setTemplateNamePrefix] = useState<string>(defaultConfig.templateNamePrefix)
-  const [templateDateNumType, setTemplateDateNumType] = useState<string>(defaultConfig.templateDateNumType)
+  const [templateNamePrefix, setTemplateNamePrefix] = useState<string>(
+    defaultConfig.templateNamePrefix
+  )
+  const [templateDateNumType, setTemplateDateNumType] = useState<string>(
+    defaultConfig.templateDateNumType
+  )
   const [previewOpen, setPreviewOpen] = useState<boolean>(false)
 
   useEffect(() => {
     if (open && item?.templateConfig) {
       const c = item.templateConfig
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTemplateType(c.templateType)
       setTemplateDate(c.templateDate ? dayjs(c.templateDate) : defaultDate())
       setTemplateValue(c.templateValue)
-      setTemplateMonth(c.templateMonth ? dayjs(c.templateMonth) : dayjs().startOf(PICKER_TYPE.MONTH))
+      setTemplateMonth(
+        c.templateMonth ? dayjs(c.templateMonth) : dayjs().startOf(PICKER_TYPE.MONTH)
+      )
       setTemplateCustom(c.templateCustom)
       setTemplateNamePrefix(c.templateNamePrefix)
       setTemplateDateNumType(c.templateDateNumType)
@@ -66,7 +75,9 @@ function FileRenameDrawer({
       setTemplateType(d.templateType)
       setTemplateDate(d.templateDate ? dayjs(d.templateDate) : defaultDate())
       setTemplateValue(d.templateValue)
-      setTemplateMonth(d.templateMonth ? dayjs(d.templateMonth) : dayjs().startOf(PICKER_TYPE.MONTH))
+      setTemplateMonth(
+        d.templateMonth ? dayjs(d.templateMonth) : dayjs().startOf(PICKER_TYPE.MONTH)
+      )
       setTemplateCustom(d.templateCustom)
       setTemplateNamePrefix(d.templateNamePrefix)
       setTemplateDateNumType(d.templateDateNumType)

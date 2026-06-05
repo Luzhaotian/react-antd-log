@@ -52,10 +52,7 @@ function UserList() {
       render: (_, record) => {
         return (
           <Space size="middle">
-            <Button
-              type="link"
-              onClick={() => navigate(`/user/detail/${record.id}`)}
-            >
+            <Button type="link" onClick={() => navigate(`/user/detail/${record.id}`)}>
               查看详情
             </Button>
           </Space>
@@ -92,10 +89,7 @@ function UserList() {
   ]
 
   return (
-    <ListPage
-      title="用户列表"
-      description="查看用户列表，点击「查看详情」进入用户详情页"
-    >
+    <ListPage title="用户列表" description="查看用户列表，点击「查看详情」进入用户详情页">
       <Card size="small">
         <DataTable<DataType>
           columns={columns}

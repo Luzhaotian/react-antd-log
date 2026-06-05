@@ -130,15 +130,7 @@ function PostActions({ likes, comments }: { likes: string; comments: string }) {
   )
 }
 
-function PostHeader({
-  name,
-  group,
-  time,
-}: {
-  name: string
-  group: string
-  time: string
-}) {
+function PostHeader({ name, group, time }: { name: string; group: string; time: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5em' }}>
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -196,13 +188,7 @@ function FeedPost({ children }: { children: ReactNode }) {
   )
 }
 
-function TabIcon({
-  children,
-  active,
-}: {
-  children: ReactNode
-  active?: boolean
-}) {
+function TabIcon({ children, active }: { children: ReactNode; active?: boolean }) {
   return (
     <div
       style={{
@@ -357,8 +343,8 @@ export default function SocialFeedPage() {
                   color: '#000000',
                 }}
               >
-                Body text for a post. Since it’s a social app, sometimes it’s a hot take, and sometimes
-                it’s a question.
+                Body text for a post. Since it’s a social app, sometimes it’s a hot take, and
+                sometimes it’s a question.
               </p>
               <PostActions likes="6 likes" comments="18 comments" />
             </div>
@@ -410,7 +396,12 @@ export default function SocialFeedPage() {
             <TabIcon>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
                 <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M16 16l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <path
+                  d="M16 16l4 4"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
               </svg>
             </TabIcon>
             <TabIcon>

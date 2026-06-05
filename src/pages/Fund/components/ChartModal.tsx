@@ -1,69 +1,63 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Tabs, Spin, Segmented, Empty, message } from 'antd'
 import AppModal from '@/components/AppModal'
 import ReactECharts from 'echarts-for-react'
-import { fetchValuationDetailWithFallback, fetchYieldData, fetchNetValueData } from '@/api/fund'
-import type { TimeRange, ValuationData, YieldData, NetValueData, ChartModalProps } from '@/types'
-import { DEBOUNCE_DELAY, TIME_RANGE_OPTIONS } from '@/constants'
+import { fetchPingzhongNetWorth, fetchNetValueData } from '@/api/fund'
+import type { TimeRange, NetValueData, NetWorthTrendPoint, ChartModalProps } from '@/types'
+import { TIME_RANGE_OPTIONS } from '@/constants'
+
+/** 根据 timeRange 计算截止时间戳 (ms) */
+function getCutoffTimestamp(range: TimeRange): number {
+  const now = Date.now()
+  const DAY_MS = 24 * 60 * 60 * 1000
+  switch (range) {
+    case 'y':
+      return now - 30 * DAY_MS
+    case '3y':
+      return now - 90 * DAY_MS
+    case '6y':
+      return now - 180 * DAY_MS
+    case 'n':
+      return now - 365 * DAY_MS
+    case '3n':
+      return now - 1095 * DAY_MS
+    default:
+      return now - 365 * DAY_MS
+  }
+}
 
 function ChartModal({ open, fund, onClose }: ChartModalProps) {
-  const [activeTab, setActiveTab] = useState('valuation')
+  const [activeTab, setActiveTab] = useState('netValue')
   const [timeRange, setTimeRange] = useState<TimeRange>('n')
   const [loading, setLoading] = useState(false)
 
-  // 估值数据
-  const [valuationData, setValuationData] = useState<ValuationData[]>([])
-  // 收益率数据
-  const [yieldData, setYieldData] = useState<YieldData[]>([])
-  const [indexName, setIndexName] = useState('基准指数')
-  // 净值数据
+  // pingzhongdata 净值走势（用于"收益率走势" tab）
+  const [netWorthTrend, setNetWorthTrend] = useState<NetWorthTrendPoint[]>([])
+  // 净值数据（用于"净值走势" tab）
   const [netValueData, setNetValueData] = useState<NetValueData[]>([])
 
-  // 防抖定时器引用
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  // 获取估值数据（使用新的 pingzhongdata 接口，带防抖）
-  const loadValuationData = useCallback(async (fcode: string) => {
-    // 清除之前的定时器
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current)
-    }
-
-    // 防抖：延迟执行，防止频繁请求被封
-    debounceTimerRef.current = setTimeout(async () => {
+  // 加载 pingzhongdata（按需，仅 yield 标签页使用）
+  const loadPingzhong = useCallback(
+    async (fcode: string) => {
+      if (netWorthTrend.length > 0) return // 已加载
       setLoading(true)
       try {
-        // 使用新的兼容接口，优先 pingzhongdata
-        const data = await fetchValuationDetailWithFallback(fcode)
-        setValuationData(data)
-        if (data.length === 0) {
-          message.warning('暂无估值分时数据（可能是非交易时段或该基金不支持）')
+        const result = await fetchPingzhongNetWorth(fcode)
+        setNetWorthTrend(result.netWorthTrend)
+        if (result.netWorthTrend.length === 0) {
+          message.warning('暂无收益率走势数据')
         }
       } catch (error) {
-        console.error('获取估值数据失败:', error)
-        message.error('获取估值数据失败')
+        console.error('获取收益率数据失败:', error)
+        message.error('获取收益率数据失败')
       } finally {
         setLoading(false)
       }
-    }, DEBOUNCE_DELAY)
-  }, [])
+    },
+    [netWorthTrend.length]
+  )
 
-  // 获取收益率数据
-  const loadYieldData = useCallback(async (fcode: string, range: TimeRange) => {
-    setLoading(true)
-    try {
-      const result = await fetchYieldData(fcode, range)
-      setYieldData(result.data)
-      setIndexName(result.indexName)
-    } catch (error) {
-      console.error('获取收益率数据失败:', error)
-      message.error('获取收益率数据失败')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  // 获取净值数据
+  // 加载净值数据
   const loadNetValueData = useCallback(async (fcode: string, range: TimeRange) => {
     setLoading(true)
     try {
@@ -77,38 +71,40 @@ function ChartModal({ open, fund, onClose }: ChartModalProps) {
     }
   }, [])
 
-  // 切换标签或时间范围时加载数据
+  // 弹窗打开 / 切换标签时加载数据
   useEffect(() => {
     if (!open || !fund) return
 
-    if (activeTab === 'valuation') {
-      loadValuationData(fund.FCODE)
-    } else if (activeTab === 'yield') {
-      loadYieldData(fund.FCODE, timeRange)
+    if (activeTab === 'yield') {
+      loadPingzhong(fund.FCODE)
     } else if (activeTab === 'netValue') {
       loadNetValueData(fund.FCODE, timeRange)
     }
-  }, [open, fund, activeTab, timeRange, loadValuationData, loadYieldData, loadNetValueData])
+  }, [open, fund, activeTab, timeRange, loadPingzhong, loadNetValueData])
 
-  // 清理防抖定时器
+  // 重置状态
   useEffect(() => {
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current)
-      }
+    if (!open) {
+      setNetWorthTrend([])
+      setNetValueData([])
     }
-  }, [])
+  }, [open])
 
-  // 估值图表配置
-  const valuationOption = useMemo(() => {
-    if (valuationData.length === 0) return null
+  // ========== 收益率走势图表（基于 pingzhongdata Data_netWorthTrend.equityReturn） ==========
+  const yieldOption = useMemo(() => {
+    if (netWorthTrend.length === 0) return null
+
+    const cutoff = getCutoffTimestamp(timeRange)
+    const filtered = netWorthTrend.filter(p => p.x >= cutoff)
+
+    if (filtered.length === 0) return null
 
     return {
       tooltip: {
         trigger: 'axis',
         formatter: (params: { name: string; value: number }[]) => {
           const item = params[0]
-          return `${item.name}<br/>估值: ${item.value.toFixed(4)}`
+          return `${item.name}<br/>累计收益率: ${item.value?.toFixed(2)}%`
         },
       },
       grid: {
@@ -120,71 +116,10 @@ function ChartModal({ open, fund, onClose }: ChartModalProps) {
       xAxis: {
         type: 'category',
         boundaryGap: false,
-        data: valuationData.map(item => item.time),
-        axisLabel: { fontSize: 11 },
-      },
-      yAxis: {
-        type: 'value',
-        scale: true,
-        axisLabel: { fontSize: 11 },
-      },
-      series: [
-        {
-          name: '估值',
-          type: 'line',
-          smooth: true,
-          data: valuationData.map(item => Number(item.value)),
-          areaStyle: {
-            color: {
-              type: 'linear',
-              x: 0,
-              y: 0,
-              x2: 0,
-              y2: 1,
-              colorStops: [
-                { offset: 0, color: 'rgba(24, 144, 255, 0.4)' },
-                { offset: 1, color: 'rgba(24, 144, 255, 0.05)' },
-              ],
-            },
-          },
-          lineStyle: { color: '#1890ff', width: 2 },
-          itemStyle: { color: '#1890ff' },
-        },
-      ],
-    }
-  }, [valuationData])
-
-  // 收益率图表配置
-  const yieldOption = useMemo(() => {
-    if (yieldData.length === 0) return null
-
-    return {
-      tooltip: {
-        trigger: 'axis',
-        formatter: (
-          params: { seriesName: string; value: number; marker: string; name: string }[]
-        ) => {
-          let result = params[0]?.name || ''
-          params.forEach(item => {
-            result += `<br/>${item.marker}${item.seriesName}: ${item.value?.toFixed(2)}%`
-          })
-          return result
-        },
-      },
-      legend: {
-        data: [fund?.SHORTNAME || '基金', indexName],
-        bottom: 0,
-      },
-      grid: {
-        left: '3%',
-        right: '4%',
-        bottom: '12%',
-        containLabel: true,
-      },
-      xAxis: {
-        type: 'category',
-        boundaryGap: false,
-        data: yieldData.map(item => item.PDATE),
+        data: filtered.map(p => {
+          const d = new Date(p.x)
+          return `${d.getMonth() + 1}/${d.getDate()}`
+        }),
         axisLabel: { fontSize: 11 },
       },
       yAxis: {
@@ -196,28 +131,32 @@ function ChartModal({ open, fund, onClose }: ChartModalProps) {
       },
       series: [
         {
-          name: fund?.SHORTNAME || '基金',
+          name: '累计收益率',
           type: 'line',
           smooth: true,
-          data: yieldData.map(item => Number(item.YIELD)),
+          data: filtered.map(p => p.equityReturn),
+          areaStyle: {
+            color: {
+              type: 'linear',
+              x: 0,
+              y: 0,
+              x2: 0,
+              y2: 1,
+              colorStops: [
+                { offset: 0, color: 'rgba(245, 34, 45, 0.3)' },
+                { offset: 1, color: 'rgba(245, 34, 45, 0.02)' },
+              ],
+            },
+          },
           lineStyle: { color: '#f5222d', width: 2 },
           itemStyle: { color: '#f5222d' },
           showSymbol: false,
         },
-        {
-          name: indexName,
-          type: 'line',
-          smooth: true,
-          data: yieldData.map(item => Number(item.INDEXYIED)),
-          lineStyle: { color: '#1890ff', width: 2 },
-          itemStyle: { color: '#1890ff' },
-          showSymbol: false,
-        },
       ],
     }
-  }, [yieldData, fund, indexName])
+  }, [netWorthTrend, timeRange])
 
-  // 净值图表配置
+  // ========== 净值走势图表配置（不变） ==========
   const netValueOption = useMemo(() => {
     if (netValueData.length === 0) return null
 
@@ -281,23 +220,6 @@ function ChartModal({ open, fund, onClose }: ChartModalProps) {
   }, [netValueData])
 
   const tabItems = [
-    {
-      key: 'valuation',
-      label: '实时估值',
-      children: (
-        <div className="h-80">
-          {loading ? (
-            <div className="h-full flex-center">
-              <Spin />
-            </div>
-          ) : valuationOption ? (
-            <ReactECharts option={valuationOption} style={{ height: '100%' }} />
-          ) : (
-            <Empty description="暂无估值数据" />
-          )}
-        </div>
-      ),
-    },
     {
       key: 'yield',
       label: '收益率走势',

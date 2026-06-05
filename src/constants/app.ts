@@ -6,5 +6,4 @@
 export const APP_NAME = '热点集'
 
 /** 应用默认描述（如设置页表单默认值） */
-export const APP_DESCRIPTION =
-  '基于 React + TypeScript + Ant Design 的热点集管理'
+export const APP_DESCRIPTION = '基于 React + TypeScript + Ant Design 的热点集管理'

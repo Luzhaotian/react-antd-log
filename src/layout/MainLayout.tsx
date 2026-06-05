@@ -101,8 +101,14 @@ function MainLayout() {
           />
           <Breadcrumb />
           <div className="ml-auto">
-            <Dropdown menu={{ items: userMenuItems, onClick: handleUserMenuClick }} trigger={['click']}>
-              <button type="button" className="flex-center gap-2 cursor-pointer border-none bg-transparent">
+            <Dropdown
+              menu={{ items: userMenuItems, onClick: handleUserMenuClick }}
+              trigger={['click']}
+            >
+              <button
+                type="button"
+                className="flex-center gap-2 cursor-pointer border-none bg-transparent"
+              >
                 <Avatar size={32} icon={<UserOutlined />} />
               </button>
             </Dropdown>
