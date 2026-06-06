@@ -50,8 +50,8 @@ export function useMortgageCalculatorDrawer({
             annualRate: record.annualRate,
             termMonths: record.termMonths,
             repayType: record.repayType,
-            startDate: record.startDate,
-            endDate: record.endDate,
+            startDate: record.startDate ? dayjs(record.startDate) : undefined,
+            endDate: record.endDate ? dayjs(record.endDate) : undefined,
             repaymentDay: record.repaymentDay,
           }
         : {
@@ -90,6 +90,10 @@ export function useMortgageCalculatorDrawer({
 
   const recalcFromForm = useCallback(() => {
     const values = form.getFieldsValue()
+    if (!values.startDate || !values.endDate || !values.repaymentDay) {
+      message.warning('请先填写贷款发放日期、贷款到期日期和约定还款日')
+      return
+    }
     const { totalAmount, annualRate, termMonths, repayType } = values
     if (totalAmount > 0 && termMonths > 0) {
       setMonthlyList(calcMonthlyPayments(totalAmount, annualRate, termMonths, repayType))
@@ -141,10 +145,6 @@ export function useMortgageCalculatorDrawer({
 
   const handleOk = useCallback(() => {
     form.validateFields().then(values => {
-      if (!values.startDate || !values.endDate || !values.repaymentDay) {
-        message.warning('请先填写贷款发放日期、贷款到期日期和约定还款日')
-        return
-      }
       const payload = {
         ...values,
         city: regionPathToString(values.city),

@@ -60,6 +60,10 @@ export default function MortgageCalculatorList() {
 
   const handleCalculate = useCallback(
     (record: MortgageRecord) => {
+      if (!record.startDate || !record.endDate || !record.repaymentDay) {
+        message.warning('请先填写贷款发放日期、贷款到期日期和约定还款日')
+        return
+      }
       navigate('/user-requirement/loan-tracker', { state: { mortgageData: record } })
     },
     [navigate]
