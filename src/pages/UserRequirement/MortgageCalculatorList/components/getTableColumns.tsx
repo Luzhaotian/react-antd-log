@@ -1,11 +1,12 @@
 import { Button, Space } from 'antd'
+import { CalculatorOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import type { MortgageRecord, MortgageTableHandlers } from '@/types'
 import { LOAN_TYPE_LABEL, REPAY_TYPE_LABEL } from '@/constants'
 
 /** 获取房贷计算表格列 */
 export function getMortgageColumns(handlers: MortgageTableHandlers): ColumnsType<MortgageRecord> {
-  const { onView, onEdit, onDelete } = handlers
+  const { onView, onEdit, onDelete, onCalculate } = handlers
   return [
     {
       title: '名称',
@@ -119,10 +120,20 @@ export function getMortgageColumns(handlers: MortgageTableHandlers): ColumnsType
     {
       title: '操作',
       key: 'action',
-      width: 180,
+      width: 220,
       fixed: 'right',
       render: (_: unknown, record: MortgageRecord) => (
         <Space size="small">
+          {onCalculate && (
+            <Button
+              type="link"
+              size="small"
+              icon={<CalculatorOutlined />}
+              onClick={() => onCalculate(record)}
+            >
+              计算
+            </Button>
+          )}
           <Button type="link" size="small" onClick={() => onView(record)}>
             查看
           </Button>

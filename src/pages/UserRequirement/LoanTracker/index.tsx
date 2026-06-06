@@ -24,6 +24,7 @@ import {
   DollarOutlined,
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
+import { useLocation } from 'react-router-dom'
 import LoanTrackerTable from './components/LoanTrackerTable'
 import type { LoanTrackerRecord } from '@/types'
 import {
@@ -36,6 +37,7 @@ import {
   calcEarlyPayoff,
   calcPayoffDateFromAmount,
   formatMoney,
+  calcAmortizationSchedule,
 } from '@/utils'
 
 const { Title, Text } = Typography
@@ -48,6 +50,44 @@ function initRecord(): LoanTrackerRecord {
   return defaultRecord
 }
 
+/** 从 MortgageRecord 创建 LoanTrackerRecord */
+function createLoanTrackerFromMortgage(
+  mortgage: import('@/types').MortgageRecord
+): LoanTrackerRecord {
+  const now = Date.now()
+  const startDate = mortgage.startDate ?? dayjs().format('YYYY-MM-DD')
+  const repaymentDay = mortgage.repaymentDay ?? 20
+  const endDate =
+    mortgage.endDate ?? dayjs(startDate).add(mortgage.termMonths, 'month').format('YYYY-MM-DD')
+  const repayments = calcAmortizationSchedule(
+    mortgage.totalAmount,
+    mortgage.annualRate,
+    mortgage.termMonths,
+    startDate,
+    repaymentDay
+  )
+  const firstPayment = mortgage.monthlyPayments?.[0]
+  const monthlyPayment = firstPayment
+    ? firstPayment.monthlyPayment
+    : (repayments[0]?.monthlyPayment ?? 0)
+
+  return {
+    id: `lt-${now}-${Math.random().toString(36).slice(2, 10)}`,
+    createdAt: now,
+    updatedAt: now,
+    name: mortgage.name,
+    loanAmount: mortgage.totalAmount,
+    termMonths: mortgage.termMonths,
+    startDate,
+    repaymentDay,
+    annualRate: mortgage.annualRate,
+    monthlyPayment,
+    repayType: 'equal-payment',
+    endDate,
+    repayments,
+  }
+}
+
 interface StatCardConfig {
   title: string
   value: string | number
@@ -58,7 +98,20 @@ interface StatCardConfig {
 }
 
 export default function LoanTracker() {
-  const [record, setRecord] = useState<LoanTrackerRecord>(initRecord)
+  const location = useLocation()
+  const mortgageData = (
+    location.state as { mortgageData?: import('@/types').MortgageRecord } | null
+  )?.mortgageData
+
+  const [record, setRecord] = useState<LoanTrackerRecord>(() => {
+    // If navigated from mortgage calculator with data, create from it
+    if (mortgageData) {
+      const tracker = createLoanTrackerFromMortgage(mortgageData)
+      saveLoanTracker(tracker)
+      return tracker
+    }
+    return initRecord()
+  })
   const [payoffDate, setPayoffDate] = useState<string | null>(null)
   const [payoffResult, setPayoffResult] = useState<ReturnType<typeof calcEarlyPayoff>>(null)
   const [confirmModalOpen, setConfirmModalOpen] = useState(false)

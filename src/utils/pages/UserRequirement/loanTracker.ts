@@ -53,7 +53,7 @@ function getDueDate(startDate: string, repaymentDay: number, period: number): st
 /**
  * 计算等额本息还款计划
  */
-function calcAmortizationSchedule(
+export function calcAmortizationSchedule(
   loanAmount: number,
   annualRate: number,
   termMonths: number,

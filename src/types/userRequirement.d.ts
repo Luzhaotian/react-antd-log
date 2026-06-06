@@ -1,6 +1,7 @@
 /**
  * 用户需求相关类型
  */
+import type dayjs from 'dayjs'
 
 /** 单月还款明细 */
 export interface MonthlyPaymentItem {
@@ -46,6 +47,12 @@ export interface MortgageRecord {
   repayType: 'equal-payment' | 'equal-principal'
   /** 每月还款明细（根据表单计算得出） */
   monthlyPayments: MonthlyPaymentItem[]
+  /** 贷款发放日期（ISO date string） */
+  startDate?: string
+  /** 约定到期日期（ISO date string） */
+  endDate?: string
+  /** 约定还款日（每月几号） */
+  repaymentDay?: number
 }
 
 /** 房贷计算表单值（用于抽屉内表单） */
@@ -65,6 +72,9 @@ export interface MortgageFormValues {
   annualRate: number
   termMonths: number
   repayType: 'equal-payment' | 'equal-principal'
+  startDate?: string | dayjs.Dayjs
+  endDate?: string | dayjs.Dayjs
+  repaymentDay?: number
 }
 
 /** 房贷计算抽屉模式 */
@@ -78,6 +88,8 @@ export interface MortgageTableHandlers {
   onEdit: (record: MortgageRecord) => void
   /** 删除 */
   onDelete: (record: MortgageRecord) => void
+  /** 计算（跳转到还款追踪） */
+  onCalculate?: (record: MortgageRecord) => void
 }
 
 /** 房贷计算抽屉 props */

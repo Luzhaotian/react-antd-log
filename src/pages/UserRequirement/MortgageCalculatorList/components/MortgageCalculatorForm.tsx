@@ -1,5 +1,5 @@
 import React from 'react'
-import { Form, Input, InputNumber, Radio, Button, Space, Cascader, Select } from 'antd'
+import { Form, Input, InputNumber, Radio, Button, Space, Cascader, Select, DatePicker } from 'antd'
 import { ThunderboltOutlined, CalculatorOutlined } from '@ant-design/icons'
 import type { MortgageFormValues } from '@/types'
 import { REPAY_OPTIONS, LOAN_TYPE_OPTIONS } from '@/constants'
@@ -200,6 +200,15 @@ export function MortgageCalculatorForm({
       </Form.Item>
       <Form.Item name="repayType" label="还款方式">
         <Radio.Group options={REPAY_OPTIONS} optionType="button" />
+      </Form.Item>
+      <Form.Item name="startDate" label="贷款发放日期">
+        <DatePicker className="w-full" format="YYYY-MM-DD" />
+      </Form.Item>
+      <Form.Item name="endDate" label="贷款到期日期">
+        <DatePicker className="w-full" format="YYYY-MM-DD" />
+      </Form.Item>
+      <Form.Item name="repaymentDay" label="约定还款日（每月几号）">
+        <InputNumber className="w-full" min={1} max={31} placeholder="如：20" />
       </Form.Item>
       {!disabled && (
         <Form.Item label=" " colon={false}>

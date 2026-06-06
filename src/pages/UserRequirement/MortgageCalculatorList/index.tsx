@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Card, Button, message } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
+import { useNavigate } from 'react-router-dom'
 import ListPage from '@/components/ListPage'
 import DataTable from '@/components/DataTable'
 import AppModal from '@/components/AppModal'
@@ -10,6 +11,7 @@ import type { MortgageRecord, MortgageDrawerMode } from '@/types'
 import { loadMortgageList, saveMortgageList } from '@/utils'
 
 export default function MortgageCalculatorList() {
+  const navigate = useNavigate()
   const [list, setList] = useState<MortgageRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -56,6 +58,13 @@ export default function MortgageCalculatorList() {
     setDrawerOpen(true)
   }, [])
 
+  const handleCalculate = useCallback(
+    (record: MortgageRecord) => {
+      navigate('/user-requirement/loan-tracker', { state: { mortgageData: record } })
+    },
+    [navigate]
+  )
+
   const handleDelete = useCallback((record: MortgageRecord) => {
     AppModal.confirm({
       title: '确认删除',
@@ -94,6 +103,7 @@ export default function MortgageCalculatorList() {
     onView: handleView,
     onEdit: handleEdit,
     onDelete: handleDelete,
+    onCalculate: handleCalculate,
   })
 
   return (

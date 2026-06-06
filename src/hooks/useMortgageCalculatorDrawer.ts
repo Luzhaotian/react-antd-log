@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from 'react'
 import { Form, message } from 'antd'
+import dayjs from 'dayjs'
 import type {
   MonthlyPaymentItem,
   MortgageCalculatorDrawerProps,
@@ -49,6 +50,9 @@ export function useMortgageCalculatorDrawer({
             annualRate: record.annualRate,
             termMonths: record.termMonths,
             repayType: record.repayType,
+            startDate: record.startDate,
+            endDate: record.endDate,
+            repaymentDay: record.repaymentDay,
           }
         : {
             name: '',
@@ -82,7 +86,7 @@ export function useMortgageCalculatorDrawer({
         setCurrentPage(1)
       }
     }
-  }, [open, form, initialValues, record?.monthlyPayments?.length])
+  }, [open, form, initialValues, record?.monthlyPayments?.length]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const recalcFromForm = useCallback(() => {
     const values = form.getFieldsValue()
@@ -137,9 +141,23 @@ export function useMortgageCalculatorDrawer({
 
   const handleOk = useCallback(() => {
     form.validateFields().then(values => {
+      if (!values.startDate || !values.endDate || !values.repaymentDay) {
+        message.warning('请先填写贷款发放日期、贷款到期日期和约定还款日')
+        return
+      }
       const payload = {
         ...values,
         city: regionPathToString(values.city),
+        startDate: values.startDate
+          ? dayjs.isDayjs(values.startDate)
+            ? values.startDate.format('YYYY-MM-DD')
+            : values.startDate
+          : undefined,
+        endDate: values.endDate
+          ? dayjs.isDayjs(values.endDate)
+            ? values.endDate.format('YYYY-MM-DD')
+            : values.endDate
+          : undefined,
       }
       if (isAdd) {
         const newRecord = createMortgageRecord(payload)

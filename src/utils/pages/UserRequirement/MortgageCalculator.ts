@@ -138,6 +138,9 @@ export function createMortgageRecord(values: {
   annualRate: number
   termMonths: number
   repayType: 'equal-payment' | 'equal-principal'
+  startDate?: string
+  endDate?: string
+  repaymentDay?: number
 }): MortgageRecord {
   const now = Date.now()
   const monthlyPayments = calcMonthlyPayments(
@@ -161,6 +164,9 @@ export function createMortgageRecord(values: {
     termMonths: values.termMonths,
     repayType: values.repayType,
     monthlyPayments,
+    startDate: values.startDate,
+    endDate: values.endDate,
+    repaymentDay: values.repaymentDay,
   }
 }
 
@@ -180,6 +186,9 @@ export function updateMortgageRecord(
     annualRate: number
     termMonths: number
     repayType: 'equal-payment' | 'equal-principal'
+    startDate?: string
+    endDate?: string
+    repaymentDay?: number
   }
 ): MortgageRecord {
   const monthlyPayments = calcMonthlyPayments(
@@ -202,5 +211,8 @@ export function updateMortgageRecord(
     termMonths: values.termMonths,
     repayType: values.repayType,
     monthlyPayments,
+    startDate: values.startDate,
+    endDate: values.endDate,
+    repaymentDay: values.repaymentDay,
   }
 }

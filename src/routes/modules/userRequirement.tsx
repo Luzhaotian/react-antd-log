@@ -33,11 +33,12 @@ const userRequirementRoutes: ExtendedRouteObject[] = [
         element: <LoanTracker />,
         meta: {
           name: '房贷还款追踪',
+          hideInMenu: true,
         },
       },
       {
         index: true,
-        element: <LoanTracker />,
+        element: <MortgageCalculatorList />,
       },
     ],
   },
