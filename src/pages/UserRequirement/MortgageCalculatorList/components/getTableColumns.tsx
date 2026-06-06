@@ -1,5 +1,4 @@
 import { Button, Space } from 'antd'
-import { CalculatorOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import type { MortgageRecord, MortgageTableHandlers } from '@/types'
 import { LOAN_TYPE_LABEL, REPAY_TYPE_LABEL } from '@/constants'
@@ -125,12 +124,7 @@ export function getMortgageColumns(handlers: MortgageTableHandlers): ColumnsType
       render: (_: unknown, record: MortgageRecord) => (
         <Space size="small">
           {onCalculate && (
-            <Button
-              type="link"
-              size="small"
-              icon={<CalculatorOutlined />}
-              onClick={() => onCalculate(record)}
-            >
+            <Button type="link" size="small" onClick={() => onCalculate(record)}>
               计算
             </Button>
           )}
