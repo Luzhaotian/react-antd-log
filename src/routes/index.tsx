@@ -10,6 +10,7 @@ import settingsRoutes from './modules/settings'
 import testRoutes from './modules/test'
 import errorRoutes from './modules/error'
 import aiResumeRoutes from './modules/aiResume'
+import resumeEditorRoutes from './modules/resumeEditor'
 
 export const routes = [
   ...homeRoutes,
@@ -21,4 +22,5 @@ export const routes = [
   ...testRoutes,
   ...errorRoutes,
   ...aiResumeRoutes,
+  ...resumeEditorRoutes,
 ]
