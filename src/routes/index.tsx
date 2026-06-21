@@ -9,6 +9,7 @@ import userRequirementRoutes from './modules/userRequirement'
 import settingsRoutes from './modules/settings'
 import testRoutes from './modules/test'
 import errorRoutes from './modules/error'
+import aiResumeRoutes from './modules/aiResume'
 
 export const routes = [
   ...homeRoutes,
@@ -19,4 +20,5 @@ export const routes = [
   ...settingsRoutes,
   ...testRoutes,
   ...errorRoutes,
+  ...aiResumeRoutes,
 ]

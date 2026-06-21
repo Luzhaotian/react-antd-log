@@ -19,3 +19,5 @@ export * from './layout'
 export * from './userRequirement'
 /** 房贷还款追踪相关类型 */
 export * from './loanTracker'
+/** AI 简历生成器相关类型 */
+export * from './aiResume'

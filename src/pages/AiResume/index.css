@@ -1,0 +1,559 @@
+/* AI 简历生成器页面样式 */
+
+.ai-resume-page {
+  padding: 0;
+}
+
+.ai-resume-steps {
+  background: #fff;
+  padding: 24px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.ai-resume-main {
+  min-height: 400px;
+}
+
+/* Upload Step */
+.upload-step .upload-section {
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.ai-resume-file-uploader .dropzone {
+  border: 2px dashed #d9d9d9;
+  border-radius: 8px;
+  padding: 40px 20px;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: #fafafa;
+}
+
+.ai-resume-file-uploader .dropzone:hover,
+.ai-resume-file-uploader .dropzone.active {
+  border-color: #ff4d4f;
+  background: #fff2f0;
+}
+
+.ai-resume-file-uploader .dropzone.has-file {
+  border-color: #52c41a;
+  background: #f6ffed;
+}
+
+.ai-resume-file-uploader .dropzone.error {
+  border-color: #ff4d4f;
+  background: #fff2f0;
+}
+
+.ai-resume-file-uploader .dropzone-content {
+  text-align: center;
+}
+
+.ai-resume-file-uploader .dropzone-icon {
+  font-size: 48px;
+  color: #999;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.ai-resume-file-uploader .dropzone-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.ai-resume-file-uploader .dropzone-hint {
+  font-size: 14px;
+  color: #999;
+  margin: 4px 0;
+}
+
+.ai-resume-file-uploader .file-name {
+  font-size: 16px;
+  font-weight: 500;
+  color: #52c41a;
+}
+
+.ai-resume-file-uploader .error-message {
+  color: #ff4d4f;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.divider-text {
+  position: relative;
+  margin: 24px 0;
+  text-align: center;
+}
+
+.divider-text::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #e8e8e8;
+}
+
+.divider-text span {
+  position: relative;
+  background: #f5f5f5;
+  padding: 0 16px;
+  color: #999;
+  font-size: 14px;
+}
+
+.manual-input {
+  margin-top: 16px;
+}
+
+/* Configure Step */
+.configure-grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 16px;
+  align-items: start;
+}
+
+.configure-left,
+.configure-right {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.configure-right {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Preview Step */
+.preview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.preview-left {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.preview-config-bar {
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.preview-right {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 80px;
+}
+
+/* Component Styles */
+.ai-resume-api-config {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ai-resume-api-config .component-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.ai-resume-api-config .component-desc {
+  font-size: 14px;
+  color: #999;
+  margin: 0;
+}
+
+.ai-resume-api-config .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ai-resume-api-config .form-group label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.ai-resume-api-config .provider-grid {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ai-resume-api-config .model-count {
+  font-size: 12px;
+  color: #999;
+  margin: 4px 0 0;
+}
+
+.ai-resume-api-config .security-note {
+  font-size: 12px;
+  color: #999;
+  text-align: center;
+  margin: 0;
+}
+
+/* Template Selector */
+.ai-resume-template-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ai-resume-template-selector .component-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.ai-resume-template-selector .component-desc {
+  font-size: 14px;
+  color: #999;
+  margin: 0;
+}
+
+.ai-resume-template-selector .template-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.ai-resume-template-selector .template-card {
+  border: 2px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: #fff;
+  text-align: left;
+}
+
+.ai-resume-template-selector .template-card:hover {
+  border-color: #ff4d4f;
+}
+
+.ai-resume-template-selector .template-card.active {
+  border-color: #ff4d4f;
+  background: #fff2f0;
+}
+
+.ai-resume-template-selector .template-thumbnail {
+  width: 100%;
+  height: 80px;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid #e8e8e8;
+  margin-bottom: 8px;
+}
+
+.ai-resume-template-selector .thumb-header {
+  height: 24px;
+  padding: 4px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ai-resume-template-selector .thumb-name {
+  width: 40%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 2px;
+}
+
+.ai-resume-template-selector .thumb-title {
+  width: 60%;
+  height: 4px;
+  border-radius: 2px;
+  opacity: 0.7;
+}
+
+.ai-resume-template-selector .thumb-body {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ai-resume-template-selector .thumb-line {
+  height: 4px;
+  background: #e8e8e8;
+  border-radius: 2px;
+}
+
+.ai-resume-template-selector .thumb-line.long {
+  width: 100%;
+}
+
+.ai-resume-template-selector .thumb-line.medium {
+  width: 70%;
+}
+
+.ai-resume-template-selector .thumb-line.short {
+  width: 40%;
+}
+
+.ai-resume-template-selector .thumb-divider {
+  height: 2px;
+  margin: 4px 0;
+}
+
+.ai-resume-template-selector .thumb-modern-layout {
+  display: flex;
+  gap: 4px;
+  height: 100%;
+}
+
+.ai-resume-template-selector .thumb-sidebar {
+  width: 30%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px;
+}
+
+.ai-resume-template-selector .thumb-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ai-resume-template-selector .thumb-creative-accent {
+  height: 4px;
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.ai-resume-template-selector .thumb-circle {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid;
+  margin: 4px auto;
+}
+
+.ai-resume-template-selector .thumb-spacer {
+  height: 8px;
+}
+
+.ai-resume-template-selector .template-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ai-resume-template-selector .template-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.ai-resume-template-selector .template-desc {
+  font-size: 12px;
+  color: #999;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Markdown Editor */
+.ai-resume-markdown-editor {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.ai-resume-markdown-editor .editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.ai-resume-markdown-editor .component-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.ai-resume-markdown-editor .sample-panel {
+  background: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.ai-resume-markdown-editor .sample-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: #f0f0f0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.ai-resume-markdown-editor .sample-content {
+  padding: 16px;
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.ai-resume-markdown-editor .editor-textarea {
+  border: none;
+  border-radius: 0;
+  resize: none;
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 16px 20px;
+}
+
+.ai-resume-markdown-editor .editor-textarea:focus {
+  box-shadow: none;
+}
+
+.ai-resume-markdown-editor .editor-footer {
+  padding: 8px 20px;
+  border-top: 1px solid #f0f0f0;
+  text-align: right;
+}
+
+.ai-resume-markdown-editor .char-count {
+  font-size: 12px;
+  color: #999;
+}
+
+/* Resume Preview */
+.ai-resume-preview {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.ai-resume-preview .preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.ai-resume-preview .component-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.ai-resume-preview .preview-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #999;
+}
+
+.ai-resume-preview .loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f0f0f0;
+  border-top-color: #ff4d4f;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ai-resume-preview .loading-hint {
+  font-size: 12px;
+  color: #bbb;
+  margin-top: 4px;
+}
+
+.ai-resume-preview .preview-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #999;
+}
+
+.ai-resume-preview .empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.ai-resume-preview .preview-frame-wrapper {
+  padding: 16px;
+  background: #f5f5f5;
+}
+
+.ai-resume-preview .preview-frame {
+  width: 100%;
+  height: 800px;
+  border: none;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .configure-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .preview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .preview-right {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .ai-resume-template-selector .template-grid {
+    grid-template-columns: 1fr;
+  }
+}
