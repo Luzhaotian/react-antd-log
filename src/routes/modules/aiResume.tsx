@@ -1,8 +1,10 @@
 import { lazy } from 'react'
-import { FileTextOutlined } from '@ant-design/icons'
+import { Navigate } from 'react-router-dom'
+import { FileTextOutlined, AppstoreOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import type { ExtendedRouteObject } from '@/types'
 
-const AiResume = lazy(() => import('@/pages/AiResume'))
+const Templates = lazy(() => import('@/pages/AiResume/TemplateList'))
+const MyResumes = lazy(() => import('@/pages/AiResume'))
 
 const aiResumeRoutes: ExtendedRouteObject[] = [
   {
@@ -13,10 +15,24 @@ const aiResumeRoutes: ExtendedRouteObject[] = [
     },
     children: [
       {
-        path: 'generator',
-        element: <AiResume />,
+        index: true,
+        element: <Navigate to="templates" replace />,
+        meta: { name: '', hideInMenu: true },
+      },
+      {
+        path: 'templates',
+        element: <Templates />,
+        icon: <AppstoreOutlined />,
         meta: {
-          name: '简历生成器',
+          name: '模板列表',
+        },
+      },
+      {
+        path: 'my-resumes',
+        element: <MyResumes />,
+        icon: <UnorderedListOutlined />,
+        meta: {
+          name: '我的简历',
         },
       },
     ],

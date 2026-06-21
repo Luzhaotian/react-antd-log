@@ -1,225 +1,263 @@
-import { useState, useCallback, useEffect } from 'react'
-import { Steps, Button, message } from 'antd'
+import { useState, useCallback, useEffect, useMemo } from 'react'
+import { Button, Card, Tag, Space, message, Modal, Popconfirm } from 'antd'
 import {
-  UploadOutlined,
-  SettingOutlined,
+  PlusOutlined,
+  RobotOutlined,
+  EditOutlined,
+  DeleteOutlined,
   EyeOutlined,
-  RocketOutlined,
-  ArrowLeftOutlined,
 } from '@ant-design/icons'
-import type { ResumeAIConfig, ResumeData, ResumeTemplate } from '@/types'
-import { resumeTemplates } from './templates'
-import { parseResumeWithAI } from './services/aiService'
-import FileUploader from './components/FileUploader'
-import APIKeyInput from './components/APIKeyInput'
-import TemplateSelector from './components/TemplateSelector'
+import type { ColumnsType } from 'antd/es/table'
+import type { ResumeItem, ResumeAIConfig } from '@/types'
+import ListPage from '@/components/ListPage'
+import DataTable from '@/components/DataTable'
+import type { SearchBarProps } from '@/types/components/searchBar'
+import { getResumeTemplateById } from './templates'
+import AIConfigDrawer from './components/AIConfigDrawer'
+import ResumeEditDrawer from './components/ResumeEditDrawer'
 import ResumePreview from './components/ResumePreview'
-import MarkdownEditor from './components/MarkdownEditor'
 import './index.css'
 
-type StepKey = 'upload' | 'configure' | 'preview'
+const STORAGE_KEY = 'ai-resume-list'
 
-const stepItems = [
-  { title: '上传内容', icon: <UploadOutlined /> },
-  { title: '配置生成', icon: <SettingOutlined /> },
-  { title: '预览导出', icon: <EyeOutlined /> },
-]
+function loadResumes(): ResumeItem[] {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    return saved ? JSON.parse(saved) : []
+  } catch {
+    return []
+  }
+}
 
-export default function AiResume() {
-  const [step, setStep] = useState<StepKey>('upload')
-  const [markdownContent, setMarkdownContent] = useState('')
+function saveResumes(resumes: ResumeItem[]) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(resumes))
+}
+
+export default function MyResumes() {
+  const [resumes, setResumes] = useState<ResumeItem[]>(loadResumes)
   const [aiConfig, setAiConfig] = useState<ResumeAIConfig | null>(() => {
     const saved = localStorage.getItem('ai-resume-config')
     return saved ? JSON.parse(saved) : null
   })
-  const [selectedTemplate, setSelectedTemplate] = useState<ResumeTemplate>(resumeTemplates[0])
-  const [resumeData, setResumeData] = useState<ResumeData | null>(null)
-  const [isProcessing, setIsProcessing] = useState(false)
+  const [keyword, setKeyword] = useState('')
 
-  // 从 localStorage 恢复模板选择
+  const [configDrawerOpen, setConfigDrawerOpen] = useState(false)
+  const [editDrawerOpen, setEditDrawerOpen] = useState(false)
+  const [editingResume, setEditingResume] = useState<ResumeItem | null>(null)
+
+  const [previewResume, setPreviewResume] = useState<ResumeItem | null>(null)
+  const [previewOpen, setPreviewOpen] = useState(false)
+
   useEffect(() => {
-    const savedTemplate = localStorage.getItem('ai-resume-template')
-    if (savedTemplate) {
-      const t = resumeTemplates.find(tt => tt.id === savedTemplate)
-      if (t) setSelectedTemplate(t)
-    }
+    saveResumes(resumes)
+  }, [resumes])
+
+  const filteredList = useMemo(() => {
+    if (!keyword) return resumes
+    const kw = keyword.toLowerCase()
+    return resumes.filter(
+      r =>
+        r.name.toLowerCase().includes(kw) ||
+        getResumeTemplateById(r.templateId).name.toLowerCase().includes(kw)
+    )
+  }, [resumes, keyword])
+
+  const handleCreate = useCallback(() => {
+    setEditingResume(null)
+    setEditDrawerOpen(true)
+    setConfigDrawerOpen(false)
   }, [])
 
-  // 保存模板选择
-  useEffect(() => {
-    localStorage.setItem('ai-resume-template', selectedTemplate.id)
-  }, [selectedTemplate])
-
-  const handleFileUpload = useCallback((content: string) => {
-    setMarkdownContent(content)
-    setResumeData(null)
-    setStep('configure')
+  const handleEdit = useCallback((resume: ResumeItem) => {
+    setEditingResume(resume)
+    setEditDrawerOpen(true)
+    setConfigDrawerOpen(false)
   }, [])
 
-  const handleConfigChange = useCallback((config: ResumeAIConfig) => {
+  const handleDelete = useCallback((id: string) => {
+    setResumes(prev => prev.filter(r => r.id !== id))
+    message.success('已删除')
+  }, [])
+
+  const handleSave = useCallback((resume: ResumeItem) => {
+    setResumes(prev => {
+      const idx = prev.findIndex(r => r.id === resume.id)
+      if (idx >= 0) {
+        const next = [...prev]
+        next[idx] = resume
+        return next
+      }
+      return [resume, ...prev]
+    })
+  }, [])
+
+  const handlePreview = useCallback((resume: ResumeItem) => {
+    setPreviewResume(resume)
+    setPreviewOpen(true)
+    setEditDrawerOpen(false)
+  }, [])
+
+  const handleAiConfigChange = useCallback((config: ResumeAIConfig) => {
     setAiConfig(config)
   }, [])
 
-  const handleTemplateChange = useCallback((template: ResumeTemplate) => {
-    setSelectedTemplate(template)
-  }, [])
+  const searchBarProps: SearchBarProps = useMemo(
+    () => ({
+      fields: [
+        {
+          name: 'keyword',
+          label: '关键词',
+          placeholder: '按简历名称或模板名称搜索',
+        },
+      ],
+      onSearch: values => {
+        setKeyword((values.keyword ?? '').trim())
+      },
+      onReset: () => {
+        setKeyword('')
+      },
+    }),
+    []
+  )
 
-  const handleGenerate = useCallback(async () => {
-    if (!aiConfig) {
-      message.warning('请先配置 AI API Key')
-      return
-    }
-    if (!markdownContent.trim()) {
-      message.warning('请先上传或输入 Markdown 内容')
-      return
-    }
-
-    setIsProcessing(true)
-
-    try {
-      const data = await parseResumeWithAI(aiConfig, markdownContent)
-      setResumeData(data)
-      setStep('preview')
-    } catch (err) {
-      const message_text = err instanceof Error ? err.message : '生成简历时发生错误'
-      message.error(message_text)
-    } finally {
-      setIsProcessing(false)
-    }
-  }, [aiConfig, markdownContent])
-
-  const handleRegenerate = useCallback(async () => {
-    await handleGenerate()
-  }, [handleGenerate])
-
-  const handleMarkdownChange = useCallback((content: string) => {
-    setMarkdownContent(content)
-  }, [])
-
-  const currentStepIndex = step === 'upload' ? 0 : step === 'configure' ? 1 : 2
+  const columns: ColumnsType<ResumeItem> = [
+    {
+      title: '简历名称',
+      dataIndex: 'name',
+      key: 'name',
+      ellipsis: true,
+    },
+    {
+      title: '使用模板',
+      key: 'template',
+      width: 140,
+      render: (_, record) => {
+        const template = getResumeTemplateById(record.templateId)
+        return <Tag color="blue">{template.name}</Tag>
+      },
+    },
+    {
+      title: '状态',
+      key: 'status',
+      width: 100,
+      render: (_, record) =>
+        record.resumeData ? <Tag color="green">已生成</Tag> : <Tag>未生成</Tag>,
+    },
+    {
+      title: '更新时间',
+      dataIndex: 'updatedAt',
+      key: 'updatedAt',
+      width: 180,
+      render: (value: number) => new Date(value).toLocaleString('zh-CN'),
+    },
+    {
+      title: '操作',
+      key: 'action',
+      width: 220,
+      render: (_, record) => (
+        <Space>
+          <Button
+            type="link"
+            icon={<EyeOutlined />}
+            onClick={() => handlePreview(record)}
+            disabled={!record.resumeData}
+          >
+            预览
+          </Button>
+          <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record)}>
+            编辑
+          </Button>
+          <Popconfirm
+            title="确认删除该简历吗？"
+            okText="删除"
+            cancelText="取消"
+            onConfirm={() => handleDelete(record.id)}
+          >
+            <Button type="link" danger icon={<DeleteOutlined />}>
+              删除
+            </Button>
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ]
 
   return (
-    <div className="ai-resume-page">
-      {/* Steps Indicator */}
-      <div className="ai-resume-steps">
-        <Steps
-          current={currentStepIndex}
-          items={stepItems.map((item, index) => ({
-            ...item,
-            status:
-              index < currentStepIndex ? 'finish' : index === currentStepIndex ? 'process' : 'wait',
-          }))}
+    <ListPage
+      title="我的简历"
+      description="管理已创建的简历，支持预览、编辑和删除"
+      searchBarProps={searchBarProps}
+      extra={
+        <Space>
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+            新建简历
+          </Button>
+          <Button
+            icon={<RobotOutlined />}
+            onClick={() => {
+              setConfigDrawerOpen(true)
+              setEditDrawerOpen(false)
+            }}
+          >
+            AI 配置
+            {aiConfig && (
+              <Tag color="green" style={{ marginLeft: 4 }}>
+                已配置
+              </Tag>
+            )}
+          </Button>
+        </Space>
+      }
+    >
+      <Card size="small">
+        <DataTable<ResumeItem>
+          columns={columns}
+          dataSource={filteredList}
+          rowKey="id"
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            showTotal: total => `共 ${total} 条`,
+          }}
+          emptyText='还没有简历，点击右上角"新建简历"开始创建'
         />
-      </div>
+      </Card>
 
-      {/* Main Content */}
-      <div className="ai-resume-main">
-        {step === 'upload' && (
-          <div className="step-content upload-step">
-            <div className="upload-section">
-              <FileUploader onFileUpload={handleFileUpload} />
-              <div className="divider-text">
-                <span>或者</span>
-              </div>
-              <div className="manual-input">
-                <Button
-                  size="large"
-                  icon={<SettingOutlined />}
-                  onClick={() => {
-                    setStep('configure')
-                    if (!markdownContent) {
-                      setMarkdownContent('')
-                    }
-                  }}
-                >
-                  ✏️ 直接输入 Markdown 内容
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
+      {/* AI 配置抽屉 */}
+      <AIConfigDrawer
+        open={configDrawerOpen}
+        onClose={() => setConfigDrawerOpen(false)}
+        config={aiConfig}
+        onConfigChange={handleAiConfigChange}
+      />
 
-        {step === 'configure' && (
-          <div className="step-content configure-step">
-            <div className="configure-grid">
-              <div className="configure-left">
-                <MarkdownEditor
-                  initialContent={markdownContent}
-                  onContentChange={handleMarkdownChange}
-                  onRegenerate={handleGenerate}
-                  isProcessing={isProcessing}
-                />
-              </div>
-              <div className="configure-right">
-                <APIKeyInput onConfigChange={handleConfigChange} savedConfig={aiConfig} />
-                <TemplateSelector
-                  selectedTemplate={selectedTemplate}
-                  onTemplateChange={handleTemplateChange}
-                />
-                <Button
-                  type="primary"
-                  size="large"
-                  block
-                  icon={<RocketOutlined />}
-                  onClick={handleGenerate}
-                  loading={isProcessing}
-                  disabled={!aiConfig || !markdownContent.trim()}
-                >
-                  {isProcessing ? 'AI 生成中...' : '🚀 生成简历'}
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
+      {/* 简历编辑抽屉 */}
+      <ResumeEditDrawer
+        open={editDrawerOpen}
+        onClose={() => setEditDrawerOpen(false)}
+        resume={editingResume}
+        aiConfig={aiConfig}
+        onSave={handleSave}
+        onPreview={handlePreview}
+      />
 
-        {step === 'preview' && (
-          <div className="step-content preview-step">
-            <div className="preview-grid">
-              <div className="preview-left">
-                <MarkdownEditor
-                  initialContent={markdownContent}
-                  onContentChange={handleMarkdownChange}
-                  onRegenerate={handleRegenerate}
-                  isProcessing={isProcessing}
-                />
-                <div className="preview-config-bar">
-                  <TemplateSelector
-                    selectedTemplate={selectedTemplate}
-                    onTemplateChange={handleTemplateChange}
-                  />
-                  <Button
-                    type="primary"
-                    block
-                    icon={<RocketOutlined />}
-                    onClick={handleRegenerate}
-                    loading={isProcessing}
-                    disabled={!aiConfig}
-                  >
-                    {isProcessing ? '⏳ 重新生成中...' : '🔄 重新生成'}
-                  </Button>
-                  <Button
-                    block
-                    icon={<ArrowLeftOutlined />}
-                    onClick={() => {
-                      setStep('configure')
-                      setResumeData(null)
-                    }}
-                  >
-                    ← 返回配置
-                  </Button>
-                </div>
-              </div>
-              <div className="preview-right">
-                <ResumePreview
-                  resumeData={resumeData}
-                  template={selectedTemplate}
-                  isLoading={isProcessing}
-                />
-              </div>
-            </div>
-          </div>
+      {/* 简历预览弹窗 */}
+      <Modal
+        title="📄 简历预览"
+        open={previewOpen}
+        onCancel={() => setPreviewOpen(false)}
+        width={900}
+        footer={null}
+        destroyOnClose
+      >
+        {previewResume && (
+          <ResumePreview
+            resumeData={previewResume.resumeData}
+            template={getResumeTemplateById(previewResume.templateId)}
+            isLoading={false}
+          />
         )}
-      </div>
-    </div>
+      </Modal>
+    </ListPage>
   )
 }

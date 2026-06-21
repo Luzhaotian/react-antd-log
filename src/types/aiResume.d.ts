@@ -69,18 +69,29 @@ export interface ResumeData {
 }
 
 /** 简历模板样式类型 */
-export type ResumeTemplateStyle = 'classic' | 'modern' | 'creative' | 'minimal'
+export type ResumeTemplateStyle = 'classic' | 'modern' | 'creative' | 'minimal' | 'sidebar'
 
 /** 简历模板 */
 export interface ResumeTemplate {
   id: string
   name: string
   description: string
-  thumbnail: string
+  category: string
   style: ResumeTemplateStyle
   primaryColor: string
   secondaryColor: string
   fontFamily: string
+}
+
+/** 简历列表项 */
+export interface ResumeItem {
+  id: string
+  name: string
+  templateId: string
+  markdownContent: string
+  resumeData: ResumeData | null
+  createdAt: number
+  updatedAt: number
 }
 
 /** AI 配置 */
