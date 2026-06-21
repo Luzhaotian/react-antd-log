@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Button, Tag, Space, Modal } from 'antd'
-import { PlusOutlined, RobotOutlined, EyeOutlined } from '@ant-design/icons'
+import { PlusOutlined, RobotOutlined, EyeOutlined, ThunderboltOutlined } from '@ant-design/icons'
 import type { ResumeItem, ResumeAIConfig, ResumeData, ResumeTemplate } from '@/types'
 import { resumeTemplates, templateCategories } from '../templates'
 import { renderResume } from '../services/resumeRenderer'
@@ -87,44 +87,44 @@ function CssThumb({ template }: { template: ResumeTemplate }) {
 
   if (style === 'sidebar') {
     return (
-      <div style={{ display: 'flex', height: '100%', borderRadius: 4, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', height: '100%', borderRadius: 6, overflow: 'hidden' }}>
         <div
           style={{
             width: '35%',
             background: c,
-            padding: 8,
+            padding: 10,
             display: 'flex',
             flexDirection: 'column',
-            gap: 4,
+            gap: 5,
           }}
         >
           <div
-            style={{ height: 6, width: '60%', background: 'rgba(255,255,255,.7)', borderRadius: 2 }}
+            style={{ height: 8, width: '60%', background: 'rgba(255,255,255,.7)', borderRadius: 3 }}
           />
           <div
-            style={{ height: 4, width: '80%', background: 'rgba(255,255,255,.4)', borderRadius: 2 }}
+            style={{ height: 5, width: '80%', background: 'rgba(255,255,255,.4)', borderRadius: 3 }}
           />
           <div
             style={{
-              height: 3,
+              height: 4,
               width: '70%',
               background: 'rgba(255,255,255,.3)',
-              borderRadius: 2,
-              marginTop: 8,
+              borderRadius: 3,
+              marginTop: 10,
             }}
           />
           <div
-            style={{ height: 3, width: '50%', background: 'rgba(255,255,255,.3)', borderRadius: 2 }}
+            style={{ height: 4, width: '50%', background: 'rgba(255,255,255,.3)', borderRadius: 3 }}
           />
           <div
-            style={{ height: 3, width: '60%', background: 'rgba(255,255,255,.3)', borderRadius: 2 }}
+            style={{ height: 4, width: '60%', background: 'rgba(255,255,255,.3)', borderRadius: 3 }}
           />
         </div>
-        <div style={{ flex: 1, padding: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <div style={{ height: 4, width: '100%', background: '#e8e8e8', borderRadius: 2 }} />
-          <div style={{ height: 4, width: '70%', background: '#e8e8e8', borderRadius: 2 }} />
-          <div style={{ height: 4, width: '100%', background: '#e8e8e8', borderRadius: 2 }} />
-          <div style={{ height: 4, width: '60%', background: '#e8e8e8', borderRadius: 2 }} />
+        <div style={{ flex: 1, padding: 10, display: 'flex', flexDirection: 'column', gap: 5 }}>
+          <div style={{ height: 5, width: '100%', background: '#e8e8e8', borderRadius: 3 }} />
+          <div style={{ height: 5, width: '70%', background: '#e8e8e8', borderRadius: 3 }} />
+          <div style={{ height: 5, width: '100%', background: '#e8e8e8', borderRadius: 3 }} />
+          <div style={{ height: 5, width: '60%', background: '#e8e8e8', borderRadius: 3 }} />
         </div>
       </div>
     )
@@ -135,28 +135,28 @@ function CssThumb({ template }: { template: ResumeTemplate }) {
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <div
           style={{
-            height: 28,
+            height: 36,
             background: `linear-gradient(135deg,${c},${c2})`,
-            borderRadius: '4px 4px 0 0',
+            borderRadius: '6px 6px 0 0',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
           <div
-            style={{ height: 6, width: '50%', background: 'rgba(255,255,255,.7)', borderRadius: 2 }}
+            style={{ height: 8, width: '50%', background: 'rgba(255,255,255,.7)', borderRadius: 3 }}
           />
         </div>
         <div
-          style={{ flex: 1, padding: 6, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}
+          style={{ flex: 1, padding: 8, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <div style={{ height: 3, width: '100%', background: '#e8e8e8', borderRadius: 2 }} />
-            <div style={{ height: 3, width: '70%', background: '#e8e8e8', borderRadius: 2 }} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ height: 4, width: '100%', background: '#e8e8e8', borderRadius: 3 }} />
+            <div style={{ height: 4, width: '70%', background: '#e8e8e8', borderRadius: 3 }} />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <div style={{ height: 3, width: '100%', background: '#e8e8e8', borderRadius: 2 }} />
-            <div style={{ height: 3, width: '60%', background: '#e8e8e8', borderRadius: 2 }} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ height: 4, width: '100%', background: '#e8e8e8', borderRadius: 3 }} />
+            <div style={{ height: 4, width: '60%', background: '#e8e8e8', borderRadius: 3 }} />
           </div>
         </div>
       </div>
@@ -165,43 +165,43 @@ function CssThumb({ template }: { template: ResumeTemplate }) {
 
   if (style === 'creative') {
     return (
-      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: 6, gap: 4 }}>
-        <div style={{ borderLeft: `3px solid ${c}`, paddingLeft: 6 }}>
-          <div style={{ height: 5, width: '60%', background: c, borderRadius: 2 }} />
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: 8, gap: 6 }}>
+        <div style={{ borderLeft: `3px solid ${c}`, paddingLeft: 8 }}>
+          <div style={{ height: 7, width: '60%', background: c, borderRadius: 3 }} />
           <div
-            style={{ height: 3, width: '40%', background: '#ccc', borderRadius: 2, marginTop: 3 }}
+            style={{ height: 4, width: '40%', background: '#ccc', borderRadius: 3, marginTop: 4 }}
           />
         </div>
-        <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
           <div
             style={{
-              width: 8,
-              height: 8,
+              width: 10,
+              height: 10,
               borderRadius: '50%',
               background: c,
               flexShrink: 0,
-              marginTop: 2,
+              marginTop: 3,
             }}
           />
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <div style={{ height: 3, width: '100%', background: '#e8e8e8', borderRadius: 2 }} />
-            <div style={{ height: 3, width: '70%', background: '#e8e8e8', borderRadius: 2 }} />
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ height: 4, width: '100%', background: '#e8e8e8', borderRadius: 3 }} />
+            <div style={{ height: 4, width: '70%', background: '#e8e8e8', borderRadius: 3 }} />
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
           <div
             style={{
-              width: 8,
-              height: 8,
+              width: 10,
+              height: 10,
               borderRadius: '50%',
               background: c,
               flexShrink: 0,
-              marginTop: 2,
+              marginTop: 3,
             }}
           />
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <div style={{ height: 3, width: '90%', background: '#e8e8e8', borderRadius: 2 }} />
-            <div style={{ height: 3, width: '60%', background: '#e8e8e8', borderRadius: 2 }} />
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ height: 4, width: '90%', background: '#e8e8e8', borderRadius: 3 }} />
+            <div style={{ height: 4, width: '60%', background: '#e8e8e8', borderRadius: 3 }} />
           </div>
         </div>
       </div>
@@ -216,40 +216,40 @@ function CssThumb({ template }: { template: ResumeTemplate }) {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          padding: 8,
-          gap: 6,
+          padding: 10,
+          gap: 8,
         }}
       >
         <div
           style={{
-            width: 20,
-            height: 20,
+            width: 28,
+            height: 28,
             borderRadius: '50%',
             background: c,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             color: '#fff',
-            fontSize: 10,
+            fontSize: 13,
             fontWeight: 700,
           }}
         >
           张
         </div>
-        <div style={{ height: 4, width: '50%', background: '#333', borderRadius: 2 }} />
+        <div style={{ height: 5, width: '50%', background: '#333', borderRadius: 3 }} />
         <div
           style={{
             width: '100%',
             background: '#f5f5f5',
-            borderRadius: 4,
-            padding: 4,
+            borderRadius: 6,
+            padding: 6,
             display: 'flex',
             flexDirection: 'column',
-            gap: 3,
+            gap: 4,
           }}
         >
-          <div style={{ height: 3, width: '100%', background: '#e0e0e0', borderRadius: 2 }} />
-          <div style={{ height: 3, width: '70%', background: '#e0e0e0', borderRadius: 2 }} />
+          <div style={{ height: 4, width: '100%', background: '#e0e0e0', borderRadius: 3 }} />
+          <div style={{ height: 4, width: '70%', background: '#e0e0e0', borderRadius: 3 }} />
         </div>
       </div>
     )
@@ -257,29 +257,35 @@ function CssThumb({ template }: { template: ResumeTemplate }) {
 
   // classic
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: 6, gap: 4 }}>
-      <div style={{ textAlign: 'center', borderBottom: `2px solid ${c}`, paddingBottom: 4 }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: 8, gap: 6 }}>
+      <div style={{ textAlign: 'center', borderBottom: `2px solid ${c}`, paddingBottom: 6 }}>
         <div
-          style={{ height: 5, width: '50%', background: c, borderRadius: 2, margin: '0 auto' }}
+          style={{ height: 7, width: '50%', background: c, borderRadius: 3, margin: '0 auto' }}
         />
-        <div
-          style={{ height: 3, width: '30%', background: c2, borderRadius: 2, margin: '3px auto 0' }}
-        />
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-        <div style={{ height: 3, width: '100%', background: '#e8e8e8', borderRadius: 2 }} />
-        <div style={{ height: 3, width: '70%', background: '#e8e8e8', borderRadius: 2 }} />
         <div
           style={{
-            height: 2,
-            width: '100%',
-            background: `${c}30`,
-            borderRadius: 2,
-            margin: '2px 0',
+            height: 4,
+            width: '30%',
+            background: c2,
+            borderRadius: 3,
+            margin: '4px auto 0',
           }}
         />
-        <div style={{ height: 3, width: '90%', background: '#e8e8e8', borderRadius: 2 }} />
-        <div style={{ height: 3, width: '60%', background: '#e8e8e8', borderRadius: 2 }} />
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div style={{ height: 4, width: '100%', background: '#e8e8e8', borderRadius: 3 }} />
+        <div style={{ height: 4, width: '70%', background: '#e8e8e8', borderRadius: 3 }} />
+        <div
+          style={{
+            height: 3,
+            width: '100%',
+            background: `${c}30`,
+            borderRadius: 3,
+            margin: '3px 0',
+          }}
+        />
+        <div style={{ height: 4, width: '90%', background: '#e8e8e8', borderRadius: 3 }} />
+        <div style={{ height: 4, width: '60%', background: '#e8e8e8', borderRadius: 3 }} />
       </div>
     </div>
   )
@@ -368,31 +374,55 @@ export default function Templates() {
 
   return (
     <div className="ai-resume-page">
-      {/* 顶部工具栏 */}
-      <div className="ai-resume-toolbar">
-        <Space>
-          <Button icon={<RobotOutlined />} onClick={() => setConfigDrawerOpen(true)}>
-            AI 配置
-            {aiConfig && (
-              <Tag color="green" style={{ marginLeft: 4 }}>
-                已配置
-              </Tag>
-            )}
-          </Button>
-        </Space>
+      {/* Hero 区域 */}
+      <div className="template-hero">
+        <div className="template-hero-content">
+          <h1>📄 AI 简历生成器</h1>
+          <p>
+            选择专业模板，上传或输入您的简历内容，AI 智能解析并生成精美简历。支持 PDF
+            导出，助您脱颖而出。
+          </p>
+          <div className="template-hero-actions">
+            <Button
+              type="primary"
+              ghost
+              icon={<RobotOutlined />}
+              onClick={() => {
+                setConfigDrawerOpen(true)
+                setEditDrawerOpen(false)
+              }}
+              style={{
+                background: 'rgba(255,255,255,.15)',
+                borderColor: 'rgba(255,255,255,.4)',
+                color: '#fff',
+              }}
+            >
+              AI 配置
+              {aiConfig && (
+                <Tag color="green" style={{ marginLeft: 6 }}>
+                  已配置
+                </Tag>
+              )}
+            </Button>
+            <Space size={4}>
+              <ThunderboltOutlined style={{ opacity: 0.7 }} />
+              <span style={{ fontSize: 13, opacity: 0.7 }}>已生成 {resumes.length} 份简历</span>
+            </Space>
+          </div>
+        </div>
       </div>
 
-      {/* 分类标签 */}
-      <div className="ai-resume-categories">
+      {/* 分类筛选 */}
+      <div className="template-filter-bar">
+        <span className="template-filter-label">行业分类</span>
         {templateCategories.map(cat => (
-          <Button
+          <button
             key={cat}
-            type={activeCategory === cat ? 'primary' : 'text'}
-            size="small"
+            className={`template-filter-pill ${activeCategory === cat ? 'active' : ''}`}
             onClick={() => setActiveCategory(cat)}
           >
             {cat}
-          </Button>
+          </button>
         ))}
       </div>
 
