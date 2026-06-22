@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Button, Input, Space, Menu, message, Dropdown, Typography } from 'antd'
+import { Button, Input, Space, Menu, message, Dropdown, Typography, Modal, Spin } from 'antd'
 import {
   ArrowLeftOutlined,
   DownloadOutlined,
@@ -12,6 +12,7 @@ import {
   RocketOutlined,
   ThunderboltOutlined,
   CommentOutlined,
+  UploadOutlined,
 } from '@ant-design/icons'
 import { useResumeEditorStore } from './store'
 import { getResumeTemplateById } from './templates'
@@ -24,6 +25,8 @@ import SkillsForm from './components/SkillsForm'
 import SelfEvaluationForm from './components/SelfEvaluationForm'
 import PreviewModal from './components/PreviewModal'
 import TemplateSelector from './components/TemplateSelector'
+import FileUpload from './components/FileUpload'
+import type { ResumeData } from './types'
 
 const { Text } = Typography
 
@@ -44,6 +47,8 @@ export default function Workbench() {
 
   const [previewOpen, setPreviewOpen] = useState(false)
   const [templateSelectorOpen, setTemplateSelectorOpen] = useState(false)
+  const [uploadModalOpen, setUploadModalOpen] = useState(false)
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     if (id) {
@@ -89,6 +94,43 @@ export default function Workbench() {
     setTemplateSelectorOpen(true)
   }, [])
 
+  const handleUpload = useCallback(
+    (data: Partial<ResumeData>) => {
+      if (!id) return
+
+      setUploading(true)
+
+      // Merge uploaded data with current resume
+      const mergedData: Partial<ResumeData> = {}
+
+      // Only merge non-empty fields
+      if (data.basic) {
+        mergedData.basic = { ...currentResume!.basic, ...data.basic }
+      }
+      if (data.education && data.education.length > 0) {
+        mergedData.education = [...(currentResume!.education || []), ...data.education]
+      }
+      if (data.experience && data.experience.length > 0) {
+        mergedData.experience = [...(currentResume!.experience || []), ...data.experience]
+      }
+      if (data.projects && data.projects.length > 0) {
+        mergedData.projects = [...(currentResume!.projects || []), ...data.projects]
+      }
+      if (data.skillContent) {
+        mergedData.skillContent = data.skillContent
+      }
+      if (data.selfEvaluationContent) {
+        mergedData.selfEvaluationContent = data.selfEvaluationContent
+      }
+
+      updateResume(id, mergedData)
+      setUploading(false)
+      setUploadModalOpen(false)
+      message.success('文件内容已导入')
+    },
+    [id, currentResume, updateResume]
+  )
+
   if (!currentResume) {
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
@@ -109,13 +151,19 @@ export default function Workbench() {
     }))
 
   const moreMenuItems = [
+    { key: 'upload', label: '导入文件', icon: <UploadOutlined /> },
+    { type: 'divider' as const },
     { key: 'export-json', label: '导出 JSON', icon: <DownloadOutlined /> },
     { key: 'export-md', label: '导出 Markdown', icon: <DownloadOutlined /> },
+    { type: 'divider' as const },
     { key: 'change-template', label: '更换模板', icon: <EyeOutlined /> },
   ]
 
   const handleMoreClick = ({ key }: { key: string }) => {
     switch (key) {
+      case 'upload':
+        setUploadModalOpen(true)
+        break
       case 'export-json':
         handleExportJson()
         break
@@ -237,6 +285,52 @@ export default function Workbench() {
           setTemplateSelectorOpen(false)
         }}
       />
+
+      {/* Upload modal */}
+      <Modal
+        title="导入文件"
+        open={uploadModalOpen}
+        onCancel={() => setUploadModalOpen(false)}
+        footer={null}
+        width={600}
+        destroyOnClose
+      >
+        <FileUpload onImport={handleUpload} />
+      </Modal>
+
+      {/* Full-screen loading overlay */}
+      {uploading && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+          }}
+        >
+          <div
+            style={{
+              background: '#fff',
+              borderRadius: 12,
+              padding: '40px 60px',
+              textAlign: 'center',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+            }}
+          >
+            <Spin size="large" />
+            <div style={{ marginTop: 16, fontSize: 16, color: '#333' }}>正在导入文件内容...</div>
+            <div style={{ marginTop: 8, fontSize: 13, color: '#999' }}>
+              AI 正在解析和提取简历信息
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
