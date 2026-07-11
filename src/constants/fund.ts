@@ -40,6 +40,15 @@ export const DEFAULT_FUND_CODES: string[] = [
 /** 刷新间隔（秒） */
 export const REFRESH_INTERVAL = 30
 
+/** 持仓分组选项 */
+export const FUND_GROUP_OPTIONS = [
+  { label: '科技', value: '科技' },
+  { label: '消费', value: '消费' },
+  { label: '黄金', value: '黄金' },
+  { label: '军工', value: '军工' },
+  { label: '其他', value: '其他' },
+] as const
+
 /** 时间范围选项 */
 export const TIME_RANGE_OPTIONS: Option<TimeRange, string>[] = [
   { label: '近1月', value: TIME_RANGE.Y },

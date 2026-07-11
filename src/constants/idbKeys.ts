@@ -9,6 +9,8 @@ export const IDB_KEYS = {
   FILE_RENAME_LIST: 'file-rename-list',
   /** 二维码列表（工具 - 二维码管理） */
   QR_CODE_LIST: 'qr-code-list',
+  /** 基金持仓（投资理财 - 基金监控） */
+  FUND_HOLDINGS: 'fund-holdings',
 } as const
 
 export type IdbKey = (typeof IDB_KEYS)[keyof typeof IDB_KEYS]

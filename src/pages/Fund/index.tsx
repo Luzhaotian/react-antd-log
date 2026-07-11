@@ -1,44 +1,61 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
-import { Card, Button, Typography, Space, message, Switch, Tooltip } from 'antd'
+import { Card, Button, Typography, Space, message, Switch, Tooltip, Alert } from 'antd'
 
 const { Text } = Typography
 import { ReloadOutlined, SyncOutlined, BellOutlined, CopyOutlined } from '@ant-design/icons'
 import ListPage from '@/components/ListPage'
 import { fetchFundList } from '@/api/fund'
-import { FundTable, FundSearch, StatisticsCards, ChartModal, FundDetailModal } from './components'
-import type { FundInfo } from '@/types'
+import {
+  FundTable,
+  FundSearch,
+  StatisticsCards,
+  ChartModal,
+  FundDetailModal,
+  FundHoldingDrawer,
+} from './components'
+import type { FundHolding, FundHoldingsMap, FundInfo } from '@/types'
 import { DEFAULT_FUND_CODES, REFRESH_INTERVAL } from '@/constants'
-import { storage } from '@/utils'
+import {
+  storage,
+  loadFundHoldings,
+  saveFundHolding,
+  calcHoldingMetrics,
+  calcPortfolioSummary,
+  fundsHaveRealtime,
+  getChangePct,
+  getValuationSessionHint,
+} from '@/utils'
 import { STORAGE_KEYS } from '@/constants'
 
 function FundMonitor() {
-  // 基金代码列表
   const [fundCodes, setFundCodes] = useState<string[]>(() => {
     return storage.get<string[]>(STORAGE_KEYS.FUND_CODES) ?? DEFAULT_FUND_CODES
   })
 
-  // 基金数据
   const [funds, setFunds] = useState<FundInfo[]>([])
+  const [holdings, setHoldings] = useState<FundHoldingsMap>({})
   const [loading, setLoading] = useState(false)
 
-  // 自动刷新
   const [autoRefresh, setAutoRefresh] = useState(false)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // 上次更新时间
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
 
-  // 弹窗状态
   const [chartModalOpen, setChartModalOpen] = useState(false)
   const [detailModalOpen, setDetailModalOpen] = useState(false)
+  const [holdingDrawerOpen, setHoldingDrawerOpen] = useState(false)
   const [selectedFund, setSelectedFund] = useState<FundInfo | null>(null)
 
-  // 保存基金代码到本地存储
+  const sessionHint = useMemo(() => getValuationSessionHint(), [])
+
   useEffect(() => {
     storage.set(STORAGE_KEYS.FUND_CODES, fundCodes)
   }, [fundCodes])
 
-  // 获取基金数据
+  useEffect(() => {
+    loadFundHoldings().then(setHoldings)
+  }, [])
+
   const loadFundData = useCallback(async () => {
     if (fundCodes.length === 0) {
       setFunds([])
@@ -58,12 +75,10 @@ function FundMonitor() {
     }
   }, [fundCodes])
 
-  // 初始加载
   useEffect(() => {
     loadFundData()
   }, [loadFundData])
 
-  // 自动刷新逻辑
   useEffect(() => {
     if (autoRefresh) {
       timerRef.current = setInterval(() => {
@@ -81,9 +96,8 @@ function FundMonitor() {
         clearInterval(timerRef.current)
       }
     }
-  }, [autoRefresh, REFRESH_INTERVAL, loadFundData])
+  }, [autoRefresh, loadFundData])
 
-  // 按 fundCodes 顺序排序 funds
   const sortedFunds = useMemo(() => {
     const codeIndexMap = new Map(fundCodes.map((code, index) => [code, index]))
     return [...funds].sort((a, b) => {
@@ -93,18 +107,29 @@ function FundMonitor() {
     })
   }, [funds, fundCodes])
 
-  // 复制页面数据为文本：基金代码、名字、涨/跌，格式清晰
+  const portfolio = useMemo(
+    () => calcPortfolioSummary(sortedFunds, holdings),
+    [sortedFunds, holdings]
+  )
+
   const handleCopyPageData = useCallback(async () => {
+    const hasRealtime = fundsHaveRealtime(sortedFunds)
     const lines: string[] = [
       '——— 基金实时监控 ———',
       lastUpdate ? `更新于 ${lastUpdate.toLocaleString('zh-CN')}` : '',
-      '',
     ]
 
+    if (portfolio.hasHoldings) {
+      lines.push(
+        `组合市值 ${portfolio.totalMarketValue.toFixed(2)} 元`,
+        `今日估算盈亏 ${portfolio.totalTodayProfit >= 0 ? '+' : ''}${portfolio.totalTodayProfit.toFixed(2)} 元`,
+        `加权涨跌 ${portfolio.weightedChange >= 0 ? '+' : ''}${portfolio.weightedChange.toFixed(2)}%`,
+        ''
+      )
+    }
+
     sortedFunds.forEach(f => {
-      const gszzl = f.GSZZL ? Number(f.GSZZL) : NaN
-      const navchgrt = f.NAVCHGRT ? Number(f.NAVCHGRT) : NaN
-      const change = !isNaN(gszzl) ? gszzl : !isNaN(navchgrt) ? navchgrt : null
+      const change = getChangePct(f, hasRealtime)
       const status =
         change === null
           ? '—'
@@ -113,7 +138,11 @@ function FundMonitor() {
             : change < 0
               ? `跌 ${change.toFixed(2)}%`
               : '平'
-      lines.push(`${f.FCODE}  ${f.SHORTNAME}  ${status}`)
+      const metrics = calcHoldingMetrics(f, holdings[f.FCODE], hasRealtime)
+      const holdingPart = metrics
+        ? `  持仓盈亏 ${metrics.profit >= 0 ? '+' : ''}${metrics.profit.toFixed(2)}元`
+        : ''
+      lines.push(`${f.FCODE}  ${f.SHORTNAME}  ${status}${holdingPart}`)
     })
 
     const text = lines.join('\n')
@@ -123,27 +152,34 @@ function FundMonitor() {
     } catch {
       message.error('复制失败，请手动选择复制')
     }
-  }, [sortedFunds, lastUpdate])
+  }, [sortedFunds, lastUpdate, holdings, portfolio])
 
-  // 打开图表弹窗
   const handleViewChart = useCallback((fund: FundInfo) => {
     setSelectedFund(fund)
     setChartModalOpen(true)
   }, [])
 
-  // 打开详情弹窗
   const handleViewDetail = useCallback((fund: FundInfo) => {
     setSelectedFund(fund)
     setDetailModalOpen(true)
   }, [])
 
-  // 删除基金
+  const handleEditHolding = useCallback((fund: FundInfo) => {
+    setSelectedFund(fund)
+    setHoldingDrawerOpen(true)
+  }, [])
+
+  const handleSaveHolding = useCallback(async (fcode: string, holding: FundHolding | null) => {
+    const next = await saveFundHolding(fcode, holding)
+    setHoldings(next)
+    message.success(holding ? '持仓已保存' : '持仓已清除')
+  }, [])
+
   const handleDelete = useCallback((fundCode: string) => {
     setFundCodes(prev => prev.filter(code => code !== fundCode))
     message.success('删除成功')
   }, [])
 
-  // 拖拽排序
   const handleReorder = useCallback((newOrder: string[]) => {
     setFundCodes(newOrder)
   }, [])
@@ -157,7 +193,7 @@ function FundMonitor() {
             基金实时监控
           </>
         }
-        description="实时追踪基金估值变化，支持图表分析和详情查看"
+        description="实时追踪基金估值变化，支持持仓盈亏、组合汇总与图表分析"
         titleRight={
           <Space>
             <Tooltip title={`每 ${REFRESH_INTERVAL} 秒自动刷新`}>
@@ -189,6 +225,10 @@ function FundMonitor() {
           </Space>
         }
       >
+        {sessionHint && (
+          <Alert className="mb-4" type="info" showIcon message={sessionHint} closable />
+        )}
+
         <FundSearch
           fundCodes={fundCodes}
           funds={funds}
@@ -197,10 +237,8 @@ function FundMonitor() {
           loading={loading}
         />
 
-        {/* 统计卡片 */}
-        <StatisticsCards funds={funds} />
+        <StatisticsCards funds={funds} holdings={holdings} />
 
-        {/* 基金列表 */}
         <Card
           title={
             <span className="flex items-center gap-2">
@@ -217,8 +255,10 @@ function FundMonitor() {
           <FundTable
             dataSource={sortedFunds}
             loading={loading}
+            holdings={holdings}
             onViewDetail={handleViewDetail}
             onViewChart={handleViewChart}
+            onEditHolding={handleEditHolding}
             onDelete={handleDelete}
             onReorder={handleReorder}
           />
@@ -235,6 +275,14 @@ function FundMonitor() {
         open={detailModalOpen}
         fund={selectedFund}
         onClose={() => setDetailModalOpen(false)}
+      />
+
+      <FundHoldingDrawer
+        open={holdingDrawerOpen}
+        fund={selectedFund}
+        holding={selectedFund ? (holdings[selectedFund.FCODE] ?? null) : null}
+        onClose={() => setHoldingDrawerOpen(false)}
+        onSave={handleSaveHolding}
       />
     </>
   )

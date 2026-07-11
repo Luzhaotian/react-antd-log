@@ -1,11 +1,12 @@
 import { useMemo, useCallback, useContext, createContext } from 'react'
-import { Tooltip, Popconfirm } from 'antd'
+import { Tooltip, Popconfirm, Tag } from 'antd'
 import {
   RiseOutlined,
   FallOutlined,
   LineChartOutlined,
   DeleteOutlined,
   HolderOutlined,
+  EditOutlined,
 } from '@ant-design/icons'
 import {
   DndContext,
@@ -29,10 +30,17 @@ import DataTable from '@/components/DataTable'
 import TextButton from '@/components/TextButton'
 import type { ColumnsType } from 'antd/es/table'
 import type { FundInfo, RowContextProps, FundTableProps, SortableRowProps } from '@/types'
+import {
+  calcHoldingMetrics,
+  fundsHaveRealtime,
+  getChangeColor,
+  getChangePct,
+  getEstimateDeviation,
+  getYesterdayChangePct,
+} from '@/utils'
 
 const RowContext = createContext<RowContextProps>({})
 
-// 拖拽手柄组件
 function DragHandle() {
   const { setActivatorNodeRef, listeners } = useContext(RowContext)
   return (
@@ -80,18 +88,42 @@ function SortableRow({ children, ...props }: SortableRowProps) {
   )
 }
 
+function renderChangePct(value: number | null) {
+  if (value === null) return '--'
+  const color = getChangeColor(value)
+  const icon =
+    value > 0 ? <RiseOutlined /> : value < 0 ? <FallOutlined /> : <span className="w-3.5" />
+  return (
+    <span className="font-mono font-semibold flex items-center justify-end gap-1" style={{ color }}>
+      {icon}
+      {value > 0 ? '+' : ''}
+      {value.toFixed(2)}%
+    </span>
+  )
+}
+
+function renderMoney(value: number | null, showSign = true) {
+  if (value === null) return '--'
+  const color = getChangeColor(value)
+  return (
+    <span className="font-mono font-medium" style={{ color }}>
+      {showSign && value > 0 ? '+' : ''}
+      {value.toFixed(2)}
+    </span>
+  )
+}
+
 function FundTable({
   dataSource,
   loading,
+  holdings,
   onViewDetail,
   onViewChart,
+  onEditHolding,
   onDelete,
   onReorder,
 }: FundTableProps) {
-  // 检测是否有实时估值数据
-  const hasRealtimeData = useMemo(() => {
-    return dataSource.some(fund => fund.GSZZL && fund.GSZZL !== null && fund.GSZZL !== '')
-  }, [dataSource])
+  const hasRealtimeData = useMemo(() => fundsHaveRealtime(dataSource), [dataSource])
 
   const columns: ColumnsType<FundInfo> = useMemo(
     () => [
@@ -105,7 +137,8 @@ function FundTable({
         title: '基金代码',
         dataIndex: 'FCODE',
         key: 'FCODE',
-        width: 100,
+        width: 96,
+        fixed: 'left',
         render: (code: string) => (
           <span className="font-mono text-blue-600 font-medium">{code}</span>
         ),
@@ -114,19 +147,56 @@ function FundTable({
         title: '基金名称',
         dataIndex: 'SHORTNAME',
         key: 'SHORTNAME',
-        width: 180,
+        width: 168,
+        fixed: 'left',
         ellipsis: true,
         render: (name: string, record: FundInfo) => (
-          <Tooltip title={name}>
-            <TextButton onClick={() => onViewDetail(record)}>{name}</TextButton>
-          </Tooltip>
+          <div className="min-w-0">
+            <Tooltip title={name}>
+              <TextButton onClick={() => onViewDetail(record)}>{name}</TextButton>
+            </Tooltip>
+            {holdings[record.FCODE]?.group && (
+              <Tag className="mt-1" bordered={false}>
+                {holdings[record.FCODE].group}
+              </Tag>
+            )}
+          </div>
         ),
+      },
+      {
+        title: '份额',
+        key: 'shares',
+        width: 88,
+        align: 'right' as const,
+        render: (_, record) => {
+          const holding = holdings[record.FCODE]
+          if (!holding) {
+            return <TextButton onClick={() => onEditHolding(record)}>录入</TextButton>
+          }
+          return (
+            <TextButton onClick={() => onEditHolding(record)}>
+              {holding.shares.toLocaleString('zh-CN', { maximumFractionDigits: 2 })}
+            </TextButton>
+          )
+        },
+      },
+      {
+        title: '成本',
+        key: 'costPrice',
+        width: 80,
+        align: 'right' as const,
+        render: (_, record) => {
+          const cost = holdings[record.FCODE]?.costPrice
+          return (
+            <span className="font-mono text-xs text-gray-600">{cost ? cost.toFixed(4) : '--'}</span>
+          )
+        },
       },
       {
         title: '单位净值',
         dataIndex: 'NAV',
         key: 'NAV',
-        width: 100,
+        width: 92,
         align: 'right' as const,
         render: (nav: string) => (
           <span className="font-mono">{nav ? Number(nav).toFixed(4) : '--'}</span>
@@ -136,10 +206,9 @@ function FundTable({
         title: hasRealtimeData ? '估算净值' : '净值',
         dataIndex: 'GSZ',
         key: 'GSZ',
-        width: 100,
+        width: 92,
         align: 'right' as const,
         render: (gsz: string, record: FundInfo) => {
-          // 如果有实时估值显示估算净值，否则显示单位净值
           const value = hasRealtimeData && gsz ? gsz : record.NAV
           return (
             <span className="font-mono font-medium">{value ? Number(value).toFixed(4) : '--'}</span>
@@ -147,37 +216,71 @@ function FundTable({
         },
       },
       {
-        title: hasRealtimeData ? '估算涨跌幅' : '昨日涨跌幅',
+        title: hasRealtimeData ? '估算涨跌' : '涨跌',
         dataIndex: 'GSZZL',
         key: 'GSZZL',
+        width: 108,
+        align: 'right' as const,
+        sorter: (a: FundInfo, b: FundInfo) => {
+          const aValue = getChangePct(a, hasRealtimeData) ?? 0
+          const bValue = getChangePct(b, hasRealtimeData) ?? 0
+          return aValue - bValue
+        },
+        render: (_, record) => renderChangePct(getChangePct(record, hasRealtimeData)),
+      },
+      ...(hasRealtimeData
+        ? [
+            {
+              title: '昨日涨跌',
+              key: 'NAVCHGRT',
+              width: 100,
+              align: 'right' as const,
+              render: (_: unknown, record: FundInfo) =>
+                renderChangePct(getYesterdayChangePct(record)),
+            },
+            {
+              title: '估算偏差',
+              key: 'deviation',
+              width: 96,
+              align: 'right' as const,
+              render: (_: unknown, record: FundInfo) => {
+                const deviation = getEstimateDeviation(record, true)
+                if (deviation === null) return '--'
+                return (
+                  <Tooltip title="估算涨跌 − 昨日涨跌（百分点）">
+                    <span className="font-mono text-xs text-gray-600">
+                      {deviation > 0 ? '+' : ''}
+                      {deviation.toFixed(2)}
+                    </span>
+                  </Tooltip>
+                )
+              },
+            },
+          ]
+        : []),
+      {
+        title: '持仓盈亏',
+        key: 'profit',
         width: 120,
         align: 'right' as const,
         sorter: (a: FundInfo, b: FundInfo) => {
-          const aValue = hasRealtimeData && a.GSZZL ? Number(a.GSZZL) : Number(a.NAVCHGRT || 0)
-          const bValue = hasRealtimeData && b.GSZZL ? Number(b.GSZZL) : Number(b.NAVCHGRT || 0)
-          return aValue - bValue
+          const pa = calcHoldingMetrics(a, holdings[a.FCODE], hasRealtimeData)?.profit ?? 0
+          const pb = calcHoldingMetrics(b, holdings[b.FCODE], hasRealtimeData)?.profit ?? 0
+          return pa - pb
         },
-        render: (gszzl: string, record: FundInfo) => {
-          // 优先使用实时估值，没有则使用昨日净值涨跌幅
-          const value =
-            hasRealtimeData && gszzl
-              ? Number(gszzl)
-              : record.NAVCHGRT
-                ? Number(record.NAVCHGRT)
-                : null
-          if (value === null) return '--'
-          const isRise = value > 0
-          const color = isRise ? '#f5222d' : value < 0 ? '#52c41a' : '#666'
-          const icon = isRise ? <RiseOutlined /> : value < 0 ? <FallOutlined /> : null
+        render: (_, record) => {
+          const metrics = calcHoldingMetrics(record, holdings[record.FCODE], hasRealtimeData)
+          if (!metrics) return <span className="text-gray-400">--</span>
           return (
-            <span
-              className="font-mono font-semibold flex items-center justify-end gap-1"
-              style={{ color }}
-            >
-              {icon}
-              {value > 0 ? '+' : ''}
-              {value.toFixed(2)}%
-            </span>
+            <div className="text-right leading-tight">
+              <div>{renderMoney(metrics.profit)}</div>
+              {metrics.profitPct !== null && (
+                <div className="text-xs" style={{ color: getChangeColor(metrics.profitPct) }}>
+                  {metrics.profitPct > 0 ? '+' : ''}
+                  {metrics.profitPct.toFixed(2)}%
+                </div>
+              )}
+            </div>
           )
         },
       },
@@ -185,7 +288,7 @@ function FundTable({
         title: hasRealtimeData ? '估值时间' : '净值日期',
         dataIndex: hasRealtimeData ? 'GZTIME' : 'PDATE',
         key: hasRealtimeData ? 'GZTIME' : 'PDATE',
-        width: 110,
+        width: 88,
         render: (value: string) => (
           <span className="text-gray-500 text-xs">
             {value ? (hasRealtimeData ? value.split(' ')[1] || value : value) : '--'}
@@ -196,7 +299,7 @@ function FundTable({
         title: '净值日期',
         dataIndex: 'PDATE',
         key: 'PDATE',
-        width: 110,
+        width: 100,
         render: (value: string, record: FundInfo) => (
           <span className="text-gray-500 text-xs">
             {(hasRealtimeData ? record.GZTIME?.split(' ')[0] : value) || '--'}
@@ -206,10 +309,13 @@ function FundTable({
       {
         title: '操作',
         key: 'action',
-        width: 140,
+        width: 168,
         fixed: 'right',
-        render: (_, record: FundInfo) => (
-          <div className="flex gap-2">
+        render: (_, record) => (
+          <div className="flex gap-1 flex-wrap">
+            <TextButton onClick={() => onEditHolding(record)}>
+              <EditOutlined /> 持仓
+            </TextButton>
             <TextButton onClick={() => onViewChart(record)}>
               <LineChartOutlined /> 走势
             </TextButton>
@@ -228,10 +334,9 @@ function FundTable({
         ),
       },
     ],
-    [onViewDetail, onViewChart, onDelete, hasRealtimeData]
+    [onViewDetail, onViewChart, onEditHolding, onDelete, hasRealtimeData, holdings]
   )
 
-  // 拖拽传感器配置
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -243,7 +348,6 @@ function FundTable({
     })
   )
 
-  // 拖拽结束处理
   const handleDragEnd = useCallback(
     ({ active, over }: DragEndEvent) => {
       if (over && active.id !== over.id) {
@@ -279,7 +383,7 @@ function FundTable({
           loading={loading}
           rowKey="FCODE"
           pagination={false}
-          scroll={{ x: 1000 }}
+          scroll={{ x: 1500 }}
           size="middle"
           components={{
             body: {

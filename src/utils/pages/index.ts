@@ -14,3 +14,5 @@ export * from './UserRequirement/exportMortgage'
 export * from './UserRequirement/loanTracker'
 /** 二维码管理相关工具 */
 export * from './Tools/QrCode'
+/** 基金组合与持仓 */
+export * from './Fund/portfolio'

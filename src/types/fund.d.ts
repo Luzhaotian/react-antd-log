@@ -248,10 +248,14 @@ export interface FundTableProps {
   dataSource: FundInfo[]
   /** 是否加载中 */
   loading: boolean
+  /** 持仓映射 */
+  holdings: FundHoldingsMap
   /** 查看详情回调 */
   onViewDetail: (fund: FundInfo) => void
   /** 查看图表回调 */
   onViewChart: (fund: FundInfo) => void
+  /** 编辑持仓回调 */
+  onEditHolding: (fund: FundInfo) => void
   /** 删除回调 */
   onDelete?: (fundCode: string) => void
   /** 重新排序回调 */
@@ -272,8 +276,48 @@ export interface SortableRowProps extends React.HTMLAttributes<HTMLTableRowEleme
   'data-row-key': string
 }
 
+/** 单只基金持仓（本地录入） */
+export interface FundHolding {
+  /** 持有份额 */
+  shares: number
+  /** 成本单价（净值） */
+  costPrice: number
+  /** 分组标签 */
+  group?: string
+  /** 备注 */
+  note?: string
+}
+
+/** 基金代码 → 持仓 */
+export type FundHoldingsMap = Record<string, FundHolding>
+
+/** 持仓盈亏等指标 */
+export interface FundHoldingMetrics {
+  /** 持仓市值 */
+  marketValue: number
+  /** 持仓成本 */
+  costValue: number
+  /** 浮动盈亏（元） */
+  profit: number
+  /** 浮动盈亏率（%） */
+  profitPct: number | null
+  /** 今日估算盈亏（元） */
+  todayProfit: number | null
+}
+
+/** 持仓编辑抽屉 */
+export interface FundHoldingDrawerProps {
+  open: boolean
+  fund: FundInfo | null
+  holding: FundHolding | null
+  onClose: () => void
+  onSave: (fcode: string, holding: FundHolding | null) => void
+}
+
 /** 统计卡片组件属性 */
 export interface StatisticsCardsProps {
   /** 基金列表 */
   funds: FundInfo[]
+  /** 持仓映射 */
+  holdings: FundHoldingsMap
 }
