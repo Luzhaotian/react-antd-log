@@ -9,13 +9,8 @@ function generateMenuItems(routes: ExtendedRouteObject[], parentPath: string = '
   const items: MenuItem[] = []
 
   for (const route of routes) {
-    // 如果没有 meta 或 hideInMenu 为 true，跳过
+    // 隐藏项及其子菜单均不展示
     if (!route.meta || route.meta.hideInMenu) {
-      // 如果当前路由隐藏，但可能有子路由需要显示，继续处理子路由
-      if (route.children) {
-        const childItems = generateMenuItems(route.children, buildFullPath(parentPath, route.path))
-        items.push(...childItems)
-      }
       continue
     }
 

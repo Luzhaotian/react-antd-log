@@ -11,6 +11,7 @@ const userRoutes: ExtendedRouteObject[] = [
     icon: <UserOutlined />,
     meta: {
       name: '用户管理',
+      hideInMenu: true,
     },
     children: [
       {
@@ -18,6 +19,7 @@ const userRoutes: ExtendedRouteObject[] = [
         element: <UserList />,
         meta: {
           name: '用户列表',
+          hideInMenu: true,
         },
       },
       {

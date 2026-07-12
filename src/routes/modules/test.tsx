@@ -14,6 +14,7 @@ const testRoutes: ExtendedRouteObject[] = [
     icon: <ExperimentOutlined />,
     meta: {
       name: '测试',
+      hideInMenu: true,
     },
     children: [
       {
@@ -21,6 +22,7 @@ const testRoutes: ExtendedRouteObject[] = [
         element: <SignIn />,
         meta: {
           name: 'Sign In 设计稿',
+          hideInMenu: true,
         },
       },
       {
@@ -28,6 +30,7 @@ const testRoutes: ExtendedRouteObject[] = [
         element: <Ecommerce />,
         meta: {
           name: 'Ecommerce 设计稿',
+          hideInMenu: true,
         },
       },
       {
@@ -35,6 +38,7 @@ const testRoutes: ExtendedRouteObject[] = [
         element: <Checkout />,
         meta: {
           name: 'Checkout 设计稿',
+          hideInMenu: true,
         },
       },
       {
@@ -42,6 +46,7 @@ const testRoutes: ExtendedRouteObject[] = [
         element: <Dashboard />,
         meta: {
           name: 'Dashboard 设计稿',
+          hideInMenu: true,
         },
       },
       {
@@ -49,6 +54,7 @@ const testRoutes: ExtendedRouteObject[] = [
         element: <SocialFeed />,
         meta: {
           name: 'Social feed 设计稿',
+          hideInMenu: true,
         },
       },
     ],
