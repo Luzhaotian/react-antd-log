@@ -34,3 +34,6 @@ dist-ssr
 
 # AI
 .reasonix/
+
+# 本地私有数据页（不提交 GitHub，仅本机使用）
+src/private/

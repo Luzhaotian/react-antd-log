@@ -22,7 +22,8 @@
 - **ECharts** - 图表可视化（首页、基金监控）
 - **pdfjs-dist / mammoth** - PDF、Word 文件解析（简历导入）
 - **html2canvas / jspdf** - 简历导出与 PDF 生成
-- **@dnd-kit** - 拖拽排序
+- **idb-keyval** - IndexedDB 封装（基金持仓等本地持久化）
+- **@dnd-kit** - 拖拽排序（基金列表）
 
 ### 开发工具
 
@@ -90,7 +91,7 @@ npm run format:check
 | 模块       | 路由前缀            | 说明                                          |
 | ---------- | ------------------- | --------------------------------------------- |
 | 首页       | `/home`             | 数据概览仪表盘                                |
-| 投资理财   | `/invest`           | 基金监控                                      |
+| 投资理财   | `/invest`           | 基金监控（实时估值、持仓、组合统计）          |
 | 工具包     | `/tools`            | 代码压缩、JSON 查看器、文件重命名、二维码管理 |
 | 用户管理   | `/user`             | 用户列表与详情                                |
 | 用户需求   | `/user-requirement` | 车贷/房贷计算器、还款追踪                     |
@@ -144,6 +145,65 @@ src/pages/ResumeEditor/
 - DeepSeek
 - 自定义 OpenAI 兼容接口
 
+## 基金监控
+
+路由：`/invest/fund`
+
+基于东方财富基金 API 的实时监控面板，支持多基金列表、持仓管理与组合分析。
+
+### 功能
+
+- **实时估值**：交易时段展示估算净值、涨跌幅；非交易时段展示最新净值
+- **组合统计**：总市值、昨日涨跌、持仓盈亏、涨跌幅极值等汇总卡片
+- **持仓管理**：份额、成本价、分组、备注录入（IndexedDB 持久化）
+- **组合指标**：市值、成本、昨日涨跌、估算偏差、持仓盈亏（表格列）
+- **拖拽排序**：`@dnd-kit` 调整监控列表顺序
+- **详情弹窗**：基本信息、收益率、季报持仓明细（股票重仓）、基金经理
+- **走势图表**：累计收益率 / 单位净值 / 累计净值（ECharts）
+- **自动刷新**：可开启 30 秒定时刷新
+- **名称省略**：基金名称列超长自动 `...`，悬停显示完整名称
+
+### 默认基金列表
+
+未配置本机私有数据时，默认监控 11 只基金（见 `src/constants/fund.ts` 中 `DEFAULT_FUND_CODES`）。
+
+### 本机私有持仓快照（可选）
+
+可在本机创建 `src/private/fund-portfolio/` 目录，导入支付宝截图整理的持仓数据。**该目录已加入 `.gitignore`，不会提交到 GitHub。**
+
+```
+src/private/fund-portfolio/
+├── data.ts       # 截图识别的市值、收益、基金顺序
+├── bootstrap.ts  # 根据实时净值反推份额/成本
+└── types.ts
+```
+
+- 存在私有目录时：基金列表按截图顺序排列，刷新后自动推算并写入持仓
+- 删除私有目录后：自动回退到 `DEFAULT_FUND_CODES` 与 IDB 中手动录入的持仓
+
+相关逻辑：`src/pages/Fund/privateBootstrap.ts`
+
+### 数据来源说明
+
+详情弹窗「持仓明细」展示的是**基金季报披露的股票重仓**（如贵州茅台、五粮液），截止日期为季报期末日（如 `2026-03-31` 表示 Q1 季报），数据来自东方财富 `FundMNInverstPosition` 接口，与「我的持仓」无关。
+
+### 目录结构
+
+```
+src/pages/Fund/
+├── index.tsx              # 主页面（刷新、自动刷新、组合汇总）
+├── privateBootstrap.ts    # 本机私有快照加载与回退
+└── components/
+    ├── FundTable.tsx      # 监控表格（拖拽、省略名称）
+    ├── FundSearch.tsx     # 搜索添加 / 标签管理
+    ├── StatisticsCards.tsx
+    ├── FundHoldingDrawer.tsx
+    ├── FundDetailModal.tsx
+    └── ChartModal.tsx
+```
+
+API 封装：`src/api/fund.ts`（开发环境走 Vite 代理，生产环境 JSONP/script 直连）
+
 ## 项目结构
 
 ```
@@ -159,7 +219,8 @@ react-antd-log/
 │   ├── layout/           # 主布局、菜单、面包屑
 │   ├── pages/            # 页面组件
 │   │   ├── Home/         # 首页仪表盘
-│   │   ├── Fund/         # 基金监控
+│   │   ├── Fund/         # 基金监控（含 privateBootstrap）
+│   │   ├── private/      # 本机私有数据（gitignore，不提交）
 │   │   ├── Tools/        # 工具包
 │   │   ├── User/         # 用户管理
 │   │   ├── UserRequirement/  # 贷款计算器等
@@ -249,10 +310,40 @@ import DataTable from '@/components/DataTable'
 
 ### API 代理
 
-开发环境下 `vite.config.ts` 已配置代理：
+**开发环境**下 `vite.config.ts` 已配置代理：
 
-- `/api` → Java 后端 `8080`
-- `/fundapi`、`/fundgz`、`/fundsuggest` 等 → 东方财富基金 API
+| 路径前缀       | 目标                                        |
+| -------------- | ------------------------------------------- |
+| `/api`         | Java 后端 `http://127.0.0.1:8080`           |
+| `/fundapi`     | `https://fundmobapi.eastmoney.com`          |
+| `/fundgz`      | `https://fundgz.1234567.com.cn`（实时估值） |
+| `/fundsuggest` | `https://fundsuggest.eastmoney.com`         |
+| `/funddata`    | `https://fund.eastmoney.com`                |
+| `/datacenter`  | 东方财富数据中心                            |
+
+**生产环境**（GitHub Pages）无开发代理，基金 API 通过 JSONP / script 标签直连，避免 CORS 限制。详见 `src/api/fund.ts` 与 `src/constants/api.ts`。
+
+## 部署
+
+### GitHub Pages
+
+项目通过 GitHub Actions 自动部署（`.github/workflows/deploy-github-pages.yml`），推送到 `main` 分支即触发构建。
+
+构建时注入环境变量：
+
+| 变量               | 说明                                     |
+| ------------------ | ---------------------------------------- |
+| `VITE_BASE_PATH`   | 子路径前缀，如 `/react-antd-log/`        |
+| `VITE_HASH_ROUTER` | 设为 `true` 启用 Hash 路由，避免深链 404 |
+
+访问地址：`https://<user>.github.io/<repo>/#/invest/fund`
+
+本地模拟 Pages 构建：
+
+```bash
+VITE_BASE_PATH=/react-antd-log/ VITE_HASH_ROUTER=true npm run build
+npm run preview
+```
 
 ## 路由配置
 
@@ -312,8 +403,17 @@ export const routes = [...homeRoutes, ...exampleRoutes, ...errorRoutes]
 - [SearchBar 组件文档](./docs/components/SearchBar.md)
 - [Pagination 组件文档](./docs/components/Pagination.md)
 - [AGENTS.md](./AGENTS.md) - 项目架构与开发约定
+- [.cursor/skills/eastmoney-fund-api/SKILL.md](./.cursor/skills/eastmoney-fund-api/SKILL.md) - 东方财富基金 API 说明
 
 ## 更新日志
+
+### v1.3.0 (2026-07-12)
+
+- ✅ 基金监控升级：持仓录入、组合统计、昨日涨跌、估算偏差、拖拽排序
+- ✅ 基金详情弹窗：季报持仓明细、基金经理、收益率
+- ✅ 本机私有持仓快照（`src/private/fund-portfolio/`，gitignore）
+- ✅ GitHub Pages：Hash 路由 + JSONP 直连，修复深链 404 与生产 CORS
+- ✅ 基金名称列省略显示 + 悬停 Tooltip
 
 ### v1.2.0 (2026-06-21)
 

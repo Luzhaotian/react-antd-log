@@ -40,6 +40,9 @@ export const DEFAULT_FUND_CODES: string[] = [
 /** 刷新间隔（秒） */
 export const REFRESH_INTERVAL = 30
 
+/** 私有支付宝快照写入 IDB 时的备注标记（用于回退时清理） */
+export const FUND_PRIVATE_SNAPSHOT_NOTE = '支付宝截图导入'
+
 /** 持仓分组选项 */
 export const FUND_GROUP_OPTIONS = [
   { label: '科技', value: '科技' },

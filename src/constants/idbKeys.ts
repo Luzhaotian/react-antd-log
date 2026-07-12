@@ -11,6 +11,8 @@ export const IDB_KEYS = {
   QR_CODE_LIST: 'qr-code-list',
   /** 基金持仓（投资理财 - 基金监控） */
   FUND_HOLDINGS: 'fund-holdings',
+  /** 房贷还款追踪（用户需求 - 还款追踪） */
+  LOAN_TRACKER: 'loan-tracker',
 } as const
 
 export type IdbKey = (typeof IDB_KEYS)[keyof typeof IDB_KEYS]

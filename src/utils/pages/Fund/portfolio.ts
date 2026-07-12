@@ -29,6 +29,16 @@ export async function saveFundHolding(
   return map
 }
 
+/** 移除私有快照导入的持仓，保留用户手动录入 */
+export function stripSnapshotHoldings(map: FundHoldingsMap, snapshotNote: string): FundHoldingsMap {
+  const next: FundHoldingsMap = {}
+  for (const [code, holding] of Object.entries(map)) {
+    if (holding.note === snapshotNote) continue
+    next[code] = holding
+  }
+  return next
+}
+
 /** 列表是否存在实时估值 */
 export function fundsHaveRealtime(funds: FundInfo[]): boolean {
   return funds.some(f => f.GSZZL !== null && f.GSZZL !== undefined && f.GSZZL !== '')

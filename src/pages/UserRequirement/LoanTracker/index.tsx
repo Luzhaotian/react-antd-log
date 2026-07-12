@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import {
   Row,
   Col,
@@ -11,6 +11,8 @@ import {
   Modal,
   InputNumber,
   Segmented,
+  Spin,
+  message,
 } from 'antd'
 import {
   WalletOutlined,
@@ -22,15 +24,19 @@ import {
   ExclamationCircleOutlined,
   ThunderboltOutlined,
   DollarOutlined,
+  ArrowLeftOutlined,
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import TextButton from '@/components/TextButton'
 import LoanTrackerTable from './components/LoanTrackerTable'
 import type { LoanTrackerRecord } from '@/types'
 import {
   createDefaultLoanTracker,
   loadLoanTracker,
   saveLoanTracker,
+  mergeRepaymentPaidStatus,
+  updateRepaymentPaid,
   getNextRepayment,
   getRepaymentProgress,
   getDaysUntilDue,
@@ -41,14 +47,6 @@ import {
 } from '@/utils'
 
 const { Title, Text } = Typography
-
-function initRecord(): LoanTrackerRecord {
-  const saved = loadLoanTracker()
-  if (saved) return saved
-  const defaultRecord = createDefaultLoanTracker()
-  saveLoanTracker(defaultRecord)
-  return defaultRecord
-}
 
 /** 从 MortgageRecord 创建 LoanTrackerRecord */
 function createLoanTrackerFromMortgage(
@@ -99,19 +97,13 @@ interface StatCardConfig {
 
 export default function LoanTracker() {
   const location = useLocation()
+  const navigate = useNavigate()
   const mortgageData = (
     location.state as { mortgageData?: import('@/types').MortgageRecord } | null
   )?.mortgageData
 
-  const [record, setRecord] = useState<LoanTrackerRecord>(() => {
-    // If navigated from mortgage calculator with data, create from it
-    if (mortgageData) {
-      const tracker = createLoanTrackerFromMortgage(mortgageData)
-      saveLoanTracker(tracker)
-      return tracker
-    }
-    return initRecord()
-  })
+  const [record, setRecord] = useState<LoanTrackerRecord | null>(null)
+  const [initializing, setInitializing] = useState(true)
   const [payoffDate, setPayoffDate] = useState<string | null>(null)
   const [payoffResult, setPayoffResult] = useState<ReturnType<typeof calcEarlyPayoff>>(null)
   const [confirmModalOpen, setConfirmModalOpen] = useState(false)
@@ -124,41 +116,75 @@ export default function LoanTracker() {
   const [amountResult, setAmountResult] =
     useState<ReturnType<typeof calcPayoffDateFromAmount>>(null)
 
-  const persist = useCallback((r: LoanTrackerRecord) => {
-    r.updatedAt = Date.now()
-    saveLoanTracker(r)
+  useEffect(() => {
+    let cancelled = false
+
+    ;(async () => {
+      try {
+        const saved = await loadLoanTracker()
+
+        if (mortgageData) {
+          const fresh = createLoanTrackerFromMortgage(mortgageData)
+          const merged = mergeRepaymentPaidStatus(fresh, saved)
+          await saveLoanTracker(merged)
+          if (!cancelled) {
+            setRecord(merged)
+            navigate(location.pathname, { replace: true, state: null })
+          }
+          return
+        }
+
+        if (saved) {
+          if (!cancelled) setRecord(saved)
+          return
+        }
+
+        const defaultRecord = createDefaultLoanTracker()
+        await saveLoanTracker(defaultRecord)
+        if (!cancelled) setRecord(defaultRecord)
+      } catch (error) {
+        console.error('加载还款追踪失败:', error)
+        if (!cancelled) message.error('加载还款数据失败')
+      } finally {
+        if (!cancelled) setInitializing(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [mortgageData, navigate, location.pathname])
+
+  const persist = useCallback(async (r: LoanTrackerRecord) => {
+    await saveLoanTracker(r)
     setRecord(r)
   }, [])
 
   const handleMarkPaid = useCallback(
-    (period: number) => {
-      const next = { ...record }
-      next.repayments = next.repayments.map(r => {
-        if (r.period === period && !r.paid) {
-          return {
-            ...r,
-            paid: true,
-            paidAmount: r.monthlyPayment,
-            paidDate: dayjs().format('YYYY-MM-DD'),
-          }
-        }
-        return r
-      })
-      persist(next)
+    async (period: number) => {
+      if (!record) return
+      try {
+        const next = updateRepaymentPaid(record, period, true, dayjs().format('YYYY-MM-DD'))
+        await persist(next)
+        message.success(`第 ${period} 期已标记为已还`)
+      } catch (error) {
+        console.error('保存还款状态失败:', error)
+        message.error('保存失败，请重试')
+      }
     },
     [record, persist]
   )
 
   const handleMarkUnpaid = useCallback(
-    (period: number) => {
-      const next = { ...record }
-      next.repayments = next.repayments.map(r => {
-        if (r.period === period && r.paid) {
-          return { ...r, paid: false, paidAmount: 0, paidDate: '' }
-        }
-        return r
-      })
-      persist(next)
+    async (period: number) => {
+      if (!record) return
+      try {
+        const next = updateRepaymentPaid(record, period, false)
+        await persist(next)
+      } catch (error) {
+        console.error('保存还款状态失败:', error)
+        message.error('保存失败，请重试')
+      }
     },
     [record, persist]
   )
@@ -170,12 +196,17 @@ export default function LoanTracker() {
   }, [])
 
   const handleConfirmPaid = useCallback(() => {
-    handleMarkPaid(confirmPeriod)
+    void handleMarkPaid(confirmPeriod)
     setConfirmModalOpen(false)
   }, [confirmPeriod, handleMarkPaid])
 
+  const handleBack = useCallback(() => {
+    navigate('/user-requirement/mortgage-calculator', { viewTransition: true })
+  }, [navigate])
+
   const handlePayoffDateChange = useCallback(
     (date: dayjs.Dayjs | null) => {
+      if (!record) return
       if (!date) {
         setPayoffDate(null)
         setPayoffResult(null)
@@ -190,6 +221,7 @@ export default function LoanTracker() {
 
   const handleAmountChange = useCallback(
     (val: number | null) => {
+      if (!record) return
       setInputAmount(val)
       if (val == null || val <= 0) {
         setAmountResult(null)
@@ -200,9 +232,9 @@ export default function LoanTracker() {
     [record]
   )
 
-  const progress = useMemo(() => getRepaymentProgress(record), [record])
-  const daysUntilDue = useMemo(() => getDaysUntilDue(record), [record])
-  const nextRepayment = useMemo(() => getNextRepayment(record), [record])
+  const progress = useMemo(() => (record ? getRepaymentProgress(record) : null), [record])
+  const daysUntilDue = useMemo(() => (record ? getDaysUntilDue(record) : null), [record])
+  const nextRepayment = useMemo(() => (record ? getNextRepayment(record) : null), [record])
 
   const countdownColor = useMemo(() => {
     if (daysUntilDue == null) return 'default'
@@ -241,28 +273,28 @@ export default function LoanTracker() {
       },
       {
         title: '还款进度',
-        value: progress.progressPercent,
+        value: progress?.progressPercent ?? 0,
         suffix: <span style={{ fontSize: 14 }}>%</span>,
         prefix: <RiseOutlined />,
         contentColor: '#ff4d4f',
         extra: (
           <div style={{ marginTop: 12 }}>
             <Progress
-              percent={progress.progressPercent}
+              percent={progress?.progressPercent ?? 0}
               size="small"
               strokeColor={{ '0%': '#ff4d4f', '100%': '#ff7875' }}
               trailColor="#fff1f0"
               showInfo={false}
             />
             <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 6 }}>
-              已还 {progress.paidPeriods} / {progress.totalPeriods} 期
+              已还 {progress?.paidPeriods ?? 0} / {progress?.totalPeriods ?? 0} 期
             </div>
           </div>
         ),
       },
       {
         title: '已还本金',
-        value: progress.totalPrincipalPaid,
+        value: progress?.totalPrincipalPaid ?? 0,
         suffix: <span style={{ fontSize: 14 }}>元</span>,
         prefix: <CheckCircleOutlined />,
         contentColor: '#52c41a',
@@ -270,7 +302,7 @@ export default function LoanTracker() {
           <div style={{ marginTop: 12, fontSize: 12, color: '#8c8c8c' }}>
             已还利息{' '}
             <span style={{ color: '#fa8c16', fontWeight: 600 }}>
-              {formatMoney(progress.totalInterestPaid)}
+              {formatMoney(progress?.totalInterestPaid ?? 0)}
             </span>{' '}
             元
           </div>
@@ -278,13 +310,16 @@ export default function LoanTracker() {
       },
       {
         title: '剩余本金',
-        value: progress.remainingPrincipal,
+        value: progress?.remainingPrincipal ?? 0,
         suffix: <span style={{ fontSize: 14 }}>元</span>,
         prefix: <WalletOutlined />,
         contentColor: '#1890ff',
         extra: (
           <div style={{ marginTop: 12, fontSize: 12, color: '#8c8c8c' }}>
-            待还 <span style={{ color: '#1890ff', fontWeight: 600 }}>{progress.unpaidPeriods}</span>{' '}
+            待还{' '}
+            <span style={{ color: '#1890ff', fontWeight: 600 }}>
+              {progress?.unpaidPeriods ?? 0}
+            </span>{' '}
             期
           </div>
         ),
@@ -293,10 +328,21 @@ export default function LoanTracker() {
     [daysUntilDue, countdownColor, nextRepayment, progress]
   )
 
+  if (initializing || !record || !progress) {
+    return (
+      <div className="p-4 flex justify-center py-20">
+        <Spin size="large" tip="加载还款数据..." />
+      </div>
+    )
+  }
+
   return (
     <div className="p-4">
       {/* 页面标题 */}
       <div style={{ marginBottom: 24 }}>
+        <TextButton icon={<ArrowLeftOutlined />} onClick={handleBack} className="px-0 mb-2">
+          返回房贷计算器
+        </TextButton>
         <Title level={2} style={{ marginBottom: 8 }}>
           <BankOutlined style={{ color: '#ff4d4f', marginRight: 8 }} />
           房贷还款追踪

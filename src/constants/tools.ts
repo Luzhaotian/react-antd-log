@@ -53,6 +53,8 @@ export const COMPONENT_SIZE_TYPE = {
 /** 存储 key 常量，统一管理所有 localStorage key */
 export const STORAGE_KEYS = {
   FUND_CODES: 'fund_monitor_codes',
+  /** 曾使用 src/private/fund-portfolio 快照；目录删除后用于回退默认列表 */
+  FUND_PRIVATE_BOOTSTRAP: 'fund_monitor_private_bootstrap',
   LOAN_TRACKER: 'loan-tracker-records',
 } as const
 

@@ -1,7 +1,7 @@
 import { DEFAULT_LOAN_PARAMS } from '@/constants/loanTracker'
-import { STORAGE_KEYS } from '@/constants/tools'
+import { IDB_KEYS, STORAGE_KEYS } from '@/constants'
 import type { LoanTrackerRecord, RepaymentStatus } from '@/types'
-import { storage } from '@/utils/common/storage'
+import { idbGet, idbSet, storage } from '@/utils'
 
 /**
  * 生成唯一 id
@@ -122,17 +122,109 @@ export function createDefaultLoanTracker(): LoanTrackerRecord {
 }
 
 /**
- * 从 localStorage 加载还款追踪记录
+ * 规范化还款记录（兼容旧数据缺字段）
  */
-export function loadLoanTracker(): LoanTrackerRecord | null {
-  return storage.get<LoanTrackerRecord>(STORAGE_KEYS.LOAN_TRACKER)
+export function normalizeLoanTracker(record: LoanTrackerRecord): LoanTrackerRecord {
+  return {
+    ...record,
+    repayments: record.repayments.map(r => ({
+      ...r,
+      paid: Boolean(r.paid),
+      paidAmount: r.paidAmount ?? 0,
+      paidDate: r.paidDate ?? '',
+    })),
+  }
+}
+
+/** 判断是否为同一笔贷款（用于合并已还状态） */
+export function isSameLoanTracker(a: LoanTrackerRecord, b: LoanTrackerRecord): boolean {
+  return (
+    a.loanAmount === b.loanAmount &&
+    a.termMonths === b.termMonths &&
+    a.annualRate === b.annualRate &&
+    a.startDate === b.startDate &&
+    a.repaymentDay === b.repaymentDay
+  )
 }
 
 /**
- * 保存还款追踪记录到 localStorage
+ * 将已保存的「已还」状态合并到新的还款计划（避免从房贷页跳转时覆盖标记）
  */
-export function saveLoanTracker(record: LoanTrackerRecord): void {
-  storage.set(STORAGE_KEYS.LOAN_TRACKER, record)
+export function mergeRepaymentPaidStatus(
+  fresh: LoanTrackerRecord,
+  saved: LoanTrackerRecord | null
+): LoanTrackerRecord {
+  if (!saved || !isSameLoanTracker(fresh, saved)) return fresh
+
+  const paidByPeriod = new Map(
+    saved.repayments.filter(r => r.paid).map(r => [r.period, r] as const)
+  )
+  if (paidByPeriod.size === 0) return fresh
+
+  return {
+    ...fresh,
+    repayments: fresh.repayments.map(r => {
+      const paid = paidByPeriod.get(r.period)
+      if (!paid) return r
+      return {
+        ...r,
+        paid: true,
+        paidAmount: paid.paidAmount || r.monthlyPayment,
+        paidDate: paid.paidDate || '',
+      }
+    }),
+  }
+}
+
+/**
+ * 标记单期已还 / 未还（返回新对象）
+ */
+export function updateRepaymentPaid(
+  record: LoanTrackerRecord,
+  period: number,
+  paid: boolean,
+  paidDate = ''
+): LoanTrackerRecord {
+  return {
+    ...record,
+    updatedAt: Date.now(),
+    repayments: record.repayments.map(r => {
+      if (r.period !== period) return r
+      if (paid) {
+        return {
+          ...r,
+          paid: true,
+          paidAmount: r.monthlyPayment,
+          paidDate: paidDate || formatDate(new Date()),
+        }
+      }
+      return { ...r, paid: false, paidAmount: 0, paidDate: '' }
+    }),
+  }
+}
+
+/**
+ * 从 IndexedDB 加载还款追踪记录（自动迁移旧版 localStorage）
+ */
+export async function loadLoanTracker(): Promise<LoanTrackerRecord | null> {
+  const fromIdb = await idbGet<LoanTrackerRecord>(IDB_KEYS.LOAN_TRACKER)
+  if (fromIdb) return normalizeLoanTracker(fromIdb)
+
+  const legacy = storage.get<LoanTrackerRecord>(STORAGE_KEYS.LOAN_TRACKER)
+  if (!legacy) return null
+
+  const normalized = normalizeLoanTracker(legacy)
+  await idbSet(IDB_KEYS.LOAN_TRACKER, normalized)
+  storage.remove(STORAGE_KEYS.LOAN_TRACKER)
+  return normalized
+}
+
+/**
+ * 保存还款追踪记录到 IndexedDB
+ */
+export async function saveLoanTracker(record: LoanTrackerRecord): Promise<void> {
+  const next = normalizeLoanTracker({ ...record, updatedAt: Date.now() })
+  await idbSet(IDB_KEYS.LOAN_TRACKER, next)
 }
 
 /**

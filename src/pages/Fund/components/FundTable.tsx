@@ -1,5 +1,7 @@
 import { useMemo, useCallback, useContext, createContext } from 'react'
-import { Tooltip, Popconfirm, Tag } from 'antd'
+import { Popconfirm, Tag, Tooltip, Typography } from 'antd'
+
+const { Text } = Typography
 import {
   RiseOutlined,
   FallOutlined,
@@ -147,14 +149,18 @@ function FundTable({
         title: '基金名称',
         dataIndex: 'SHORTNAME',
         key: 'SHORTNAME',
-        width: 168,
+        width: 128,
         fixed: 'left',
-        ellipsis: true,
+        ellipsis: { showTitle: false },
         render: (name: string, record: FundInfo) => (
-          <div className="min-w-0">
-            <Tooltip title={name}>
-              <TextButton onClick={() => onViewDetail(record)}>{name}</TextButton>
-            </Tooltip>
+          <div className="min-w-0 max-w-[128px]">
+            <Text
+              ellipsis={{ tooltip: name }}
+              className="block max-w-full text-[#1677ff] hover:text-[#4096ff] cursor-pointer"
+              onClick={() => onViewDetail(record)}
+            >
+              {name}
+            </Text>
             {holdings[record.FCODE]?.group && (
               <Tag className="mt-1" bordered={false}>
                 {holdings[record.FCODE].group}

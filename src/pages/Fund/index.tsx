@@ -14,7 +14,7 @@ import {
   FundHoldingDrawer,
 } from './components'
 import type { FundHolding, FundHoldingsMap, FundInfo } from '@/types'
-import { DEFAULT_FUND_CODES, REFRESH_INTERVAL } from '@/constants'
+import { REFRESH_INTERVAL, IDB_KEYS, STORAGE_KEYS } from '@/constants'
 import {
   storage,
   loadFundHoldings,
@@ -24,13 +24,21 @@ import {
   fundsHaveRealtime,
   getChangePct,
   getValuationSessionHint,
+  idbSet,
+  stripSnapshotHoldings,
 } from '@/utils'
-import { STORAGE_KEYS } from '@/constants'
+import {
+  getPrivateFundBootstrap,
+  resolveInitialFundCodes,
+  FUND_PRIVATE_SNAPSHOT_NOTE,
+} from './privateBootstrap'
+
+const privateBootstrap = getPrivateFundBootstrap()
 
 function FundMonitor() {
-  const [fundCodes, setFundCodes] = useState<string[]>(() => {
-    return storage.get<string[]>(STORAGE_KEYS.FUND_CODES) ?? DEFAULT_FUND_CODES
-  })
+  const [fundCodes, setFundCodes] = useState<string[]>(() =>
+    resolveInitialFundCodes(privateBootstrap)
+  )
 
   const [funds, setFunds] = useState<FundInfo[]>([])
   const [holdings, setHoldings] = useState<FundHoldingsMap>({})
@@ -52,8 +60,21 @@ function FundMonitor() {
     storage.set(STORAGE_KEYS.FUND_CODES, fundCodes)
   }, [fundCodes])
 
-  useEffect(() => {
-    loadFundHoldings().then(setHoldings)
+  const applyHoldings = useCallback(async (data: FundInfo[]) => {
+    if (privateBootstrap) {
+      const fromSnapshot = privateBootstrap.buildHoldingsFromFunds(data)
+      const manual = await loadFundHoldings()
+      const merged = { ...manual, ...fromSnapshot }
+      setHoldings(merged)
+      await idbSet(IDB_KEYS.FUND_HOLDINGS, merged)
+      storage.set(STORAGE_KEYS.FUND_PRIVATE_BOOTSTRAP, true)
+      return
+    }
+
+    let manual = await loadFundHoldings()
+    manual = stripSnapshotHoldings(manual, FUND_PRIVATE_SNAPSHOT_NOTE)
+    await idbSet(IDB_KEYS.FUND_HOLDINGS, manual)
+    setHoldings(manual)
   }, [])
 
   const loadFundData = useCallback(async () => {
@@ -66,6 +87,7 @@ function FundMonitor() {
     try {
       const data = await fetchFundList(fundCodes)
       setFunds(data)
+      await applyHoldings(data)
       setLastUpdate(new Date())
     } catch (error) {
       console.error('获取基金数据失败:', error)
@@ -73,7 +95,7 @@ function FundMonitor() {
     } finally {
       setLoading(false)
     }
-  }, [fundCodes])
+  }, [fundCodes, applyHoldings])
 
   useEffect(() => {
     loadFundData()
@@ -225,6 +247,16 @@ function FundMonitor() {
           </Space>
         }
       >
+        {privateBootstrap && (
+          <Alert
+            className="mb-4"
+            type="success"
+            showIcon
+            closable
+            message="已加载本机支付宝持仓快照"
+            description="基金顺序与份额/成本来自 src/private/fund-portfolio/data.ts（仅本机，不提交 Git）。刷新后会按截图市值重新推算持仓。"
+          />
+        )}
         {sessionHint && (
           <Alert className="mb-4" type="info" showIcon message={sessionHint} closable />
         )}
