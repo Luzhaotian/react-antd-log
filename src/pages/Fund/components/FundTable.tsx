@@ -253,8 +253,11 @@ function FundTable({
                 const deviation = getEstimateDeviation(record, true)
                 if (deviation === null) return '--'
                 return (
-                  <Tooltip title="估算涨跌 − 昨日涨跌（百分点）">
-                    <span className="font-mono text-xs text-gray-600">
+                  <Tooltip title="当日估算涨跌幅 − 昨日净值涨跌幅（百分点）">
+                    <span
+                      className="font-mono text-xs font-medium"
+                      style={{ color: getChangeColor(deviation) }}
+                    >
                       {deviation > 0 ? '+' : ''}
                       {deviation.toFixed(2)}
                     </span>
@@ -264,6 +267,35 @@ function FundTable({
             },
           ]
         : []),
+      {
+        title: hasRealtimeData ? '当日盈亏' : '昨日盈亏',
+        key: 'todayProfit',
+        width: 112,
+        align: 'right' as const,
+        sorter: (a: FundInfo, b: FundInfo) => {
+          const pa = calcHoldingMetrics(a, holdings[a.FCODE], hasRealtimeData)?.todayProfit ?? 0
+          const pb = calcHoldingMetrics(b, holdings[b.FCODE], hasRealtimeData)?.todayProfit ?? 0
+          return pa - pb
+        },
+        render: (_, record) => {
+          const metrics = calcHoldingMetrics(record, holdings[record.FCODE], hasRealtimeData)
+          if (!metrics || metrics.todayProfit === null) {
+            return <span className="text-gray-400">--</span>
+          }
+          const changePct = getChangePct(record, hasRealtimeData)
+          return (
+            <div className="text-right leading-tight">
+              <div>{renderMoney(metrics.todayProfit)}</div>
+              {changePct !== null && (
+                <div className="text-xs" style={{ color: getChangeColor(changePct) }}>
+                  {changePct > 0 ? '+' : ''}
+                  {changePct.toFixed(2)}%
+                </div>
+              )}
+            </div>
+          )
+        },
+      },
       {
         title: '持仓盈亏',
         key: 'profit',
@@ -389,7 +421,7 @@ function FundTable({
           loading={loading}
           rowKey="FCODE"
           pagination={false}
-          scroll={{ x: 1500 }}
+          scroll={{ x: 1620 }}
           size="middle"
           components={{
             body: {
