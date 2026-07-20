@@ -42,8 +42,11 @@ const SECTION_ICONS: Record<string, React.ReactNode> = {
 export default function Workbench() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { currentResume, setCurrentResume, clearCurrentResume, updateResume, setActiveSection } =
-    useResumeEditorStore()
+  const currentResume = useResumeEditorStore(s => s.currentResume)
+  const setCurrentResume = useResumeEditorStore(s => s.setCurrentResume)
+  const clearCurrentResume = useResumeEditorStore(s => s.clearCurrentResume)
+  const updateResume = useResumeEditorStore(s => s.updateResume)
+  const setActiveSection = useResumeEditorStore(s => s.setActiveSection)
 
   const [previewOpen, setPreviewOpen] = useState(false)
   const [templateSelectorOpen, setTemplateSelectorOpen] = useState(false)

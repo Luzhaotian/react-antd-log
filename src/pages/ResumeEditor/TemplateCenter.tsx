@@ -116,7 +116,8 @@ function createSampleResume(template: ResumeTemplate): ResumeData {
 
 export default function TemplateCenter() {
   const navigate = useNavigate()
-  const { addResume, resumes } = useResumeEditorStore()
+  const addResume = useResumeEditorStore(s => s.addResume)
+  const resumes = useResumeEditorStore(s => s.resumes)
   const [previewTemplate, setPreviewTemplate] = useState<ResumeTemplate | null>(null)
   const [hoveredTemplate, setHoveredTemplate] = useState<string | null>(null)
 

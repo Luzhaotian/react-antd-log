@@ -121,7 +121,6 @@ If theme customization is needed, configure in `main.tsx`:
 
 ```tsx
 import { ConfigProvider } from 'antd'
-
 ;<ConfigProvider
   theme={{
     token: {
@@ -168,6 +167,5 @@ function MainLayout() {
 ```tsx
 import { ReloadOutlined, MenuFoldOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
-
 ;<Button icon={<ReloadOutlined />}>Refresh</Button>
 ```

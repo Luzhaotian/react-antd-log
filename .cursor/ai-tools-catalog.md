@@ -98,7 +98,10 @@
 
 | 配置                                   | 说明                                                                                                  |
 | -------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `.claude/settings.local.json`          | Claude Code 本地权限：允许 mcp\_\_mcpServers                                                          |
+| `CLAUDE.md`                            | Claude Code 项目上下文（命令、架构、约定、Skill 索引）                                                |
+| `.claude/settings.json`                | Claude Code 团队共享权限（npm / git 只读等）                                                          |
+| `.claude/settings.local.json`          | Claude Code 本地权限（如 mcp\_\_mcpServers），已 gitignore                                            |
+| `.claude/rules/`                       | Claude Code 模块化规则（如 git-commit）                                                               |
 | `docs/skills-mcp/MCP安装与配置清单.md` | 5 个 MCP 的安装配置指南（neural-memory / playwright / filesystem / sequential-thinking / web_reader） |
 | `docs/skills-mcp/技能安装建议清单.md`  | 20 个全局 Skills 清单及维护约定                                                                       |
 

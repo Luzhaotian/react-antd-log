@@ -12,12 +12,14 @@ import { DEFAULT_RATE_COMMERCIAL, DEFAULT_RATE_PROVIDENT } from '@/constants'
 import {
   regionPathToString,
   stringToRegionPath,
-  exportMortgageToXLSX,
-  exportMortgageToPDF,
   calcMonthlyPayments,
   createMortgageRecord,
   updateMortgageRecord,
 } from '@/utils'
+import {
+  exportMortgageToXLSX,
+  exportMortgageToPDF,
+} from '@/utils/pages/UserRequirement/exportMortgage'
 
 export function useMortgageCalculatorDrawer({
   open,
@@ -197,7 +199,7 @@ export function useMortgageCalculatorDrawer({
   }, [form, monthlyList])
 
   const handleExportXLSX = useCallback(() => {
-    exportMortgageToXLSX(buildExportData())
+    void exportMortgageToXLSX(buildExportData())
     message.success('已导出 XLSX')
   }, [buildExportData])
 

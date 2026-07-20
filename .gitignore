@@ -37,3 +37,7 @@ dist-ssr
 
 # 本地私有数据页（不提交 GitHub，仅本机使用）
 src/private/
+
+# Claude Code 本地配置（团队共享见 .claude/settings.json）
+.claude/settings.local.json
+CLAUDE.local.md

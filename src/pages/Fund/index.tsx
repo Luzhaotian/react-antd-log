@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo, lazy, Suspense } from 'react'
 import { Card, Button, Typography, Space, message, Switch, Tooltip, Alert } from 'antd'
 
 const { Text } = Typography
@@ -9,10 +9,11 @@ import {
   FundTable,
   FundSearch,
   StatisticsCards,
-  ChartModal,
   FundDetailModal,
   FundHoldingDrawer,
 } from './components'
+
+const ChartModal = lazy(() => import('./components/ChartModal'))
 import type { FundHolding, FundHoldingsMap, FundInfo } from '@/types'
 import { REFRESH_INTERVAL, IDB_KEYS, STORAGE_KEYS } from '@/constants'
 import {
@@ -297,11 +298,15 @@ function FundMonitor() {
         </Card>
       </ListPage>
 
-      <ChartModal
-        open={chartModalOpen}
-        fund={selectedFund}
-        onClose={() => setChartModalOpen(false)}
-      />
+      {chartModalOpen && (
+        <Suspense fallback={null}>
+          <ChartModal
+            open={chartModalOpen}
+            fund={selectedFund}
+            onClose={() => setChartModalOpen(false)}
+          />
+        </Suspense>
+      )}
 
       <FundDetailModal
         open={detailModalOpen}

@@ -5,8 +5,10 @@ import { useResumeEditorStore } from '../store'
 const { TextArea } = Input
 
 export default function ExperienceForm() {
-  const { currentResume, addExperience, updateExperience, removeExperience } =
-    useResumeEditorStore()
+  const currentResume = useResumeEditorStore(s => s.currentResume)
+  const addExperience = useResumeEditorStore(s => s.addExperience)
+  const updateExperience = useResumeEditorStore(s => s.updateExperience)
+  const removeExperience = useResumeEditorStore(s => s.removeExperience)
   if (!currentResume) return null
 
   return (

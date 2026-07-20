@@ -1,10 +1,12 @@
 # React + Ant Design 热点收集管理系统
 
+> Claude Code 用户：先看 `CLAUDE.md`（工具配置索引），项目细节以本文为准。
+
 ## Project
 
 React 19 + TypeScript + Ant Design 6 后台管理系统，使用 Vite 7 构建，支持 Hash/History 路由切换，部署于 GitHub Pages。
 
-**入口**: `src/main.tsx` → `src/App.tsx` → `src/layout/MainLayout.tsx`
+**入口**: `src/main.tsx` → `RequireAuth` → `src/layout/MainLayout.tsx`（`App.tsx` 已移除）
 
 ## Commands
 

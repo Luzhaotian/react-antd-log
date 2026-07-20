@@ -6,6 +6,7 @@ import { resumeTemplates, templateCategories } from '../templates'
 import { renderResume } from '../services/resumeRenderer'
 import AIConfigDrawer from '../components/AIConfigDrawer'
 import ResumeEditDrawer from '../components/ResumeEditDrawer'
+import { getSavedAIConfig } from '@/utils/aiConfig'
 import '../index.css'
 
 const STORAGE_KEY = 'ai-resume-list'
@@ -326,10 +327,9 @@ function TemplatePreviewModal({
 
 export default function Templates() {
   const [resumes, setResumes] = useState<ResumeItem[]>(loadResumes)
-  const [aiConfig, setAiConfig] = useState<ResumeAIConfig | null>(() => {
-    const saved = localStorage.getItem('ai-resume-config')
-    return saved ? JSON.parse(saved) : null
-  })
+  const [aiConfig, setAiConfig] = useState<ResumeAIConfig | null>(
+    () => getSavedAIConfig() as ResumeAIConfig | null
+  )
 
   const [configDrawerOpen, setConfigDrawerOpen] = useState(false)
   const [editDrawerOpen, setEditDrawerOpen] = useState(false)

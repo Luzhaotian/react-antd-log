@@ -1,5 +1,7 @@
 ---
 name: project-standards
+version: 1.1.0
+updated: 2026-07-19
 description: Enforces unified project standards: code conventions (Prettier, ESLint, file structure, import order), project components in src/components (DataTable, Pagination, SearchBar, etc.), and component doc sync. Use when writing code, choosing components, or when the user asks about code style, conventions, file structure, project standards, or component documentation. Details live in reference files—read only the one you need.
 ---
 
@@ -20,3 +22,7 @@ description: Enforces unified project standards: code conventions (Prettier, ESL
 - 组件有变更时同步 `docs/components/<Name>.md` 与 project-components-reference.md。
 
 Use the reference files when you need full API or step-by-step rules; keep this SKILL.md for overview and discovery.
+
+## 代码审查
+
+全仓/优化点审查请用 [../code-review/SKILL.md](../code-review/SKILL.md)。

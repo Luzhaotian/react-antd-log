@@ -33,7 +33,10 @@ function formatDate(iso: string): string {
 
 export default function ResumeList() {
   const navigate = useNavigate()
-  const { resumes, addResume, deleteResume, setCurrentResume } = useResumeEditorStore()
+  const resumes = useResumeEditorStore(s => s.resumes)
+  const addResume = useResumeEditorStore(s => s.addResume)
+  const deleteResume = useResumeEditorStore(s => s.deleteResume)
+  const setCurrentResume = useResumeEditorStore(s => s.setCurrentResume)
   const [importModalOpen, setImportModalOpen] = useState(false)
 
   const handleCreate = useCallback(() => {

@@ -1,4 +1,4 @@
-import { idbGet, idbSet, idbDel } from '@/utils'
+import { idbGet, idbSet, idbDel } from '@/utils/common/idb'
 import type { MortgageRecord, MonthlyPaymentItem } from '@/types'
 import { IDB_KEYS } from '@/constants'
 

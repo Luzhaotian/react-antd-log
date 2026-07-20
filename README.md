@@ -50,7 +50,7 @@ npm install
 npm run dev
 ```
 
-开发服务器将在 `http://localhost:5173` 启动，并自动在浏览器中打开。
+开发服务器将在 `http://localhost:5173` 启动（默认不自动打开浏览器，可在 `vite.config.ts` 中修改 `server.open`）。
 
 ### 构建生产版本
 
@@ -96,7 +96,7 @@ npm run format:check
 | 用户管理   | `/user`             | 用户列表与详情                                |
 | 用户需求   | `/user-requirement` | 车贷/房贷计算器、还款追踪                     |
 | 设置       | `/settings`         | 基础与高级设置                                |
-| AI 简历    | `/ai-resume`        | AI 辅助简历生成                               |
+| AI 简历    | `/ai-resume`        | 已重定向至 `/resume-editor/*`（兼容旧书签）   |
 | 简历编辑器 | `/resume-editor`    | 可视化简历编辑与导入导出                      |
 | 测试页     | `/test`             | UI 原型与演示页面                             |
 
@@ -139,11 +139,12 @@ src/pages/ResumeEditor/
 
 ### AI 配置
 
-导入非 JSON 格式文件时，需先在「AI 配置」中填写 API Key。配置保存在浏览器 `localStorage`（键名：`ai-resume-config`），支持：
+导入非 JSON 格式文件时，需先在「AI 配置」中填写 API Key。配置由 `src/utils/aiConfig.ts` 统一管理：
 
-- OpenAI
-- DeepSeek
-- 自定义 OpenAI 兼容接口
+- **偏好**（provider、baseUrl、model）→ `localStorage`
+- **API Key** → `sessionStorage`（关闭标签页后清除，降低泄露风险）
+
+支持 OpenAI、DeepSeek、自定义 OpenAI 兼容接口。旧版 `localStorage` 键 `ai-resume-config` 会在首次读取时自动迁移。
 
 ## 基金监控
 
@@ -153,7 +154,7 @@ src/pages/ResumeEditor/
 
 ### 功能
 
-- **实时估值**：交易时段展示估算净值、涨跌幅；非交易时段展示最新净值
+- **实时估值**：交易时段优先 `fundgz` 接口；不可用时回退 `FundMNFInfo`，至少展示净值与昨日涨跌
 - **组合统计**：总市值、昨日涨跌、持仓盈亏、涨跌幅极值等汇总卡片
 - **持仓管理**：份额、成本价、分组、备注录入（IndexedDB 持久化）
 - **组合指标**：市值、成本、昨日涨跌、估算偏差、持仓盈亏（表格列）
@@ -208,7 +209,7 @@ API 封装：`src/api/fund.ts`（开发环境走 Vite 代理，生产环境 JSON
 
 ```
 react-antd-log/
-├── docs/                 # 组件文档
+├── docs/                 # 组件文档与 Skills/MCP 说明
 ├── public/               # 静态资源
 ├── src/
 │   ├── api/              # API 请求封装
@@ -220,24 +221,30 @@ react-antd-log/
 │   ├── pages/            # 页面组件
 │   │   ├── Home/         # 首页仪表盘
 │   │   ├── Fund/         # 基金监控（含 privateBootstrap）
-│   │   ├── private/      # 本机私有数据（gitignore，不提交）
 │   │   ├── Tools/        # 工具包
 │   │   ├── User/         # 用户管理
 │   │   ├── UserRequirement/  # 贷款计算器等
-│   │   ├── AiResume/     # AI 简历
+│   │   ├── AiResume/     # AI 简历（路由重定向至 ResumeEditor）
 │   │   ├── ResumeEditor/ # 简历编辑器
 │   │   ├── Settings/     # 设置
 │   │   ├── Login/        # 登录
 │   │   └── NotFound/     # 404
+│   ├── private/          # 本机私有数据（gitignore，不提交）
 │   ├── routes/
 │   │   ├── index.tsx     # 路由汇总
 │   │   └── modules/      # 按功能拆分的路由模块
 │   ├── types/            # 全局类型
 │   └── utils/            # 工具函数
+├── .cursor/              # Cursor 规则、Skills、Hooks
+├── .claude/              # Claude Code 配置（settings、rules）
+├── AGENTS.md             # AI 项目主文档（Cursor / 通用）
+├── CLAUDE.md             # Claude Code 入口（指向 AGENTS.md）
 ├── eslint.config.js      # ESLint Flat Config
 ├── uno.config.ts         # UnoCSS 配置
-└── vite.config.ts        # Vite 配置（含 API 代理）
+└── vite.config.ts        # Vite 配置（含 API 代理、manualChunks）
 ```
+
+**应用入口**：`src/main.tsx` → `RequireAuth` → `src/layout/MainLayout.tsx`（`App.tsx` 已移除）
 
 ## 功能特性
 
@@ -321,7 +328,23 @@ import DataTable from '@/components/DataTable'
 | `/funddata`    | `https://fund.eastmoney.com`                |
 | `/datacenter`  | 东方财富数据中心                            |
 
-**生产环境**（GitHub Pages）无开发代理，基金 API 通过 JSONP / script 标签直连，避免 CORS 限制。详见 `src/api/fund.ts` 与 `src/constants/api.ts`。
+**生产环境**（GitHub Pages）无开发代理，基金 API 通过 JSONP / script 标签直连，避免 CORS 限制。`fetchFundList` 在 `fundgz` 失败时会回退 `FundMNFInfo`。详见 `src/api/fund.ts` 与 `src/constants/api.ts`。
+
+## AI 辅助开发
+
+本项目同时支持 **Cursor** 与 **Claude Code**，项目说明只维护一份，工具配置各自独立。
+
+| 工具        | 主文档                               | 规则 / 配置                               | Skills                 |
+| ----------- | ------------------------------------ | ----------------------------------------- | ---------------------- |
+| Cursor      | [AGENTS.md](./AGENTS.md)             | `.cursor/rules/`、`.cursor/hooks/`        | `.cursor/skills/`      |
+| Claude Code | [CLAUDE.md](./CLAUDE.md) → AGENTS.md | `.claude/settings.json`、`.claude/rules/` | 共用 `.cursor/skills/` |
+
+- **AGENTS.md**：命令、架构、约定（AI 与开发者共用的事实来源）
+- **CLAUDE.md**：Claude Code 入口，不重复 AGENTS 内容
+- **[.cursor/ai-tools-catalog.md](./.cursor/ai-tools-catalog.md)**：Skills / Rules / Hooks 统一索引
+- **docs/skills-mcp/**：MCP 与全局 Skills 安装说明
+
+项目级 Skills 包括：前端架构、项目配置、项目规范、东方财富基金 API、代码审查。
 
 ## 部署
 
@@ -402,39 +425,13 @@ export const routes = [...homeRoutes, ...exampleRoutes, ...errorRoutes]
 - [DataTable 组件文档](./docs/components/DataTable.md)
 - [SearchBar 组件文档](./docs/components/SearchBar.md)
 - [Pagination 组件文档](./docs/components/Pagination.md)
-- [AGENTS.md](./AGENTS.md) - 项目架构与开发约定
+- [AGENTS.md](./AGENTS.md) - 项目架构与开发约定（AI 主文档）
+- [CLAUDE.md](./CLAUDE.md) - Claude Code 配置入口
+- [.cursor/ai-tools-catalog.md](./.cursor/ai-tools-catalog.md) - Cursor Skills / Rules 索引
 - [.cursor/skills/eastmoney-fund-api/SKILL.md](./.cursor/skills/eastmoney-fund-api/SKILL.md) - 东方财富基金 API 说明
-
-## 更新日志
-
-### v1.3.0 (2026-07-12)
-
-- ✅ 基金监控升级：持仓录入、组合统计、昨日涨跌、估算偏差、拖拽排序
-- ✅ 基金详情弹窗：季报持仓明细、基金经理、收益率
-- ✅ 本机私有持仓快照（`src/private/fund-portfolio/`，gitignore）
-- ✅ GitHub Pages：Hash 路由 + JSONP 直连，修复深链 404 与生产 CORS
-- ✅ 基金名称列省略显示 + 悬停 Tooltip
-
-### v1.2.0 (2026-06-21)
-
-- ✅ 新增简历编辑器模块（模板中心、我的简历、编辑工作台）
-- ✅ 支持 JSON / PDF / Word / Markdown / TXT 文件导入
-- ✅ 集成 AI 解析（OpenAI、DeepSeek、自定义兼容接口）
-- ✅ 简历数据 Zustand 持久化存储
-- ✅ 导出 JSON / Markdown
-
-### v1.1.0 (2026-01-30)
-
-- ✅ 路由模块化重构
-- ✅ View Transitions API 页面过渡动画
-- ✅ 新增基金监控、代码压缩工具
-- ✅ 移除 framer-motion，使用原生浏览器动画
-
-### v1.0.0 (2024-01-20)
-
-- ✅ 初始版本：React 19 + TypeScript + Ant Design 基础架构
-- ✅ 路由管理、多层菜单、公共组件封装
-- ✅ ESLint + Prettier 代码规范
+- [docs/skills-mcp/技能安装建议清单.md](./docs/skills-mcp/技能安装建议清单.md) - 全局 Skills 维护
+- [docs/skills-mcp/MCP安装与配置清单.md](./docs/skills-mcp/MCP安装与配置清单.md) - MCP 安装指南
+- [CHANGELOG.md](./CHANGELOG.md) - 版本更新记录
 
 ## 许可证
 

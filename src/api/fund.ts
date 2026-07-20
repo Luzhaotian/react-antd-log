@@ -153,29 +153,81 @@ function fetchRealtimeValuation(fcode: string): Promise<RealtimeValuationRespons
   )
 }
 
+function realtimeToFundInfo(item: RealtimeValuationResponse): FundInfo {
+  return {
+    FCODE: item.fundcode,
+    SHORTNAME: item.name,
+    PDATE: item.jzrq,
+    NAV: item.dwjz,
+    ACCNAV: item.dwjz, // 实时接口不提供累计净值，使用单位净值代替
+    NAVCHGRT: '', // 实时接口不提供昨日涨跌幅，留空
+    GSZ: item.gsz,
+    GSZZL: item.gszzl,
+    GZTIME: item.gztime,
+  }
+}
+
+function mnfInfoToFundInfo(item: FundInfo): FundInfo {
+  return {
+    FCODE: item.FCODE,
+    SHORTNAME: item.SHORTNAME,
+    PDATE: item.PDATE,
+    NAV: item.NAV ?? '',
+    ACCNAV: item.ACCNAV,
+    NAVCHGRT: item.NAVCHGRT ?? '',
+    GSZ: item.GSZ ?? '',
+    GSZZL: item.GSZZL ?? '',
+    GZTIME: item.GZTIME ?? '',
+  }
+}
+
+/** fundgz 不可用时，批量拉取净值与昨日涨跌（FundMNFInfo 支持 JSONP） */
+async function fetchFundBasicList(fcodes: string[]): Promise<FundInfo[]> {
+  if (fcodes.length === 0) return []
+
+  const params = buildParams({
+    pageIndex: 1,
+    pageSize: Math.min(Math.max(fcodes.length, 1), 200),
+    plat: 'Android',
+    appType: 'ttjj',
+    product: 'EFund',
+    Version: '1',
+    deviceid: 'Wap',
+    Fcodes: fcodes.join(','),
+    _: Date.now(),
+  })
+
+  const data = await fetchFundMobApiJsonp<{ Datas?: FundInfo[] }>(
+    `/FundMNewApi/FundMNFInfo?${params}`
+  )
+  return (data?.Datas ?? []).map(mnfInfoToFundInfo)
+}
+
+function orderFundList(fcodes: string[], funds: FundInfo[]): FundInfo[] {
+  const byCode = new Map(funds.map(f => [f.FCODE, f]))
+  return fcodes.map(code => byCode.get(code)).filter((f): f is FundInfo => f !== undefined)
+}
+
 /**
  * 获取基金基本信息列表（包含实时估值）
- * 使用天天基金实时估值 API，获取当日估值数据
+ * 优先天天基金 fundgz；失败或未返回的代码回退 FundMNFInfo（至少展示净值与昨日涨跌）
  */
 export async function fetchFundList(fcodes: string[]): Promise<FundInfo[]> {
-  // 并行请求所有基金的实时估值数据
+  if (fcodes.length === 0) return []
+
   const promises = fcodes.map(fcode => fetchRealtimeValuation(fcode))
   const results = await Promise.all(promises)
 
-  // 转换为 FundInfo 格式
-  return results
+  const fromRealtime = results
     .filter((item): item is RealtimeValuationResponse => item !== null)
-    .map(item => ({
-      FCODE: item.fundcode,
-      SHORTNAME: item.name,
-      PDATE: item.jzrq,
-      NAV: item.dwjz,
-      ACCNAV: item.dwjz, // 实时接口不提供累计净值，使用单位净值代替
-      NAVCHGRT: '', // 实时接口不提供昨日涨跌幅，留空
-      GSZ: item.gsz,
-      GSZZL: item.gszzl,
-      GZTIME: item.gztime,
-    }))
+    .map(realtimeToFundInfo)
+
+  const gotCodes = new Set(fromRealtime.map(f => f.FCODE))
+  const missing = fcodes.filter(code => !gotCodes.has(code))
+  if (missing.length === 0) return orderFundList(fcodes, fromRealtime)
+
+  const fromBasic = await fetchFundBasicList(missing)
+  return orderFundList(fcodes, [...fromRealtime, ...fromBasic])
 }
 
 /**

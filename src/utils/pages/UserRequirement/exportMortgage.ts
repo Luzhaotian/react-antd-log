@@ -1,6 +1,3 @@
-import * as XLSX from 'xlsx'
-import { jsPDF } from 'jspdf'
-import autoTable from 'jspdf-autotable'
 import type { MortgageExportData } from '@/types'
 import { PDF_FONT_NAME, FONT_FILE_NAME } from '@/constants'
 
@@ -14,11 +11,6 @@ async function loadChineseFontBase64(): Promise<string> {
   return fontBase64Cache
 }
 
-function registerChineseFontToDoc(doc: jsPDF, fontBase64: string): void {
-  doc.addFileToVFS(FONT_FILE_NAME, fontBase64)
-  doc.addFont(FONT_FILE_NAME, PDF_FONT_NAME, 'normal')
-}
-
 const NUM_FMT = (n: number): string =>
   n.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
@@ -29,7 +21,8 @@ export function getExportFileNameBase(name: string): string {
 }
 
 /** 导出为 XLSX */
-export function exportMortgageToXLSX(data: MortgageExportData): void {
+export async function exportMortgageToXLSX(data: MortgageExportData): Promise<void> {
+  const XLSX = await import('xlsx')
   const { params, monthlyList } = data
   const paramRows: (string | number)[][] = [
     ['计算参数', ''],
@@ -63,11 +56,14 @@ export function exportMortgageToXLSX(data: MortgageExportData): void {
 
 /** 导出为 PDF（需先加载中文字体，避免乱码） */
 export async function exportMortgageToPDF(data: MortgageExportData): Promise<void> {
+  const [{ jsPDF }, autoTableMod] = await Promise.all([import('jspdf'), import('jspdf-autotable')])
+  const autoTable = autoTableMod.default
   const { params, monthlyList } = data
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
 
   const fontBase64 = await loadChineseFontBase64()
-  registerChineseFontToDoc(doc, fontBase64)
+  doc.addFileToVFS(FONT_FILE_NAME, fontBase64)
+  doc.addFont(FONT_FILE_NAME, PDF_FONT_NAME, 'normal')
   doc.setFont(PDF_FONT_NAME, 'normal')
 
   const margin = 14

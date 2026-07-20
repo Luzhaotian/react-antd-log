@@ -1,4 +1,4 @@
-import { StrictMode } from 'react'
+import { StrictMode, lazy, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, createHashRouter, RouterProvider } from 'react-router-dom'
 import dayjs from 'dayjs'
@@ -6,15 +6,16 @@ import { APP_NAME } from '@/constants'
 import 'dayjs/locale/zh-cn'
 import utc from 'dayjs/plugin/utc'
 import timezone from 'dayjs/plugin/timezone'
-import { ConfigProvider } from 'antd'
+import { ConfigProvider, Spin } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
 import 'antd/dist/reset.css'
 import 'virtual:uno.css'
 import './index.css'
 import MainLayout from '@/layout/MainLayout'
 import RequireAuth from '@/components/RequireAuth'
-import Login from '@/pages/Login'
 import { routes } from '@/routes'
+
+const Login = lazy(() => import('@/pages/Login'))
 
 // 中国时区 + 中文：Ant Design 日期/日历的星期、月份由 dayjs locale 决定
 dayjs.locale('zh-cn')
@@ -57,7 +58,17 @@ if (!skipRender) {
   const routeTree = [
     {
       path: '/login',
-      element: <Login />,
+      element: (
+        <Suspense
+          fallback={
+            <div className="min-h-screen flex-center">
+              <Spin size="large" />
+            </div>
+          }
+        >
+          <Login />
+        </Suspense>
+      ),
     },
     {
       path: '/',

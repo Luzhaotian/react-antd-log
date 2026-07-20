@@ -1,7 +1,30 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { persist, createJSONStorage, type StateStorage } from 'zustand/middleware'
 import type { ResumeData, BasicInfo, Education, Experience, Project, Certificate } from '../types'
 import { DEFAULT_PHOTO_CONFIG } from '../types'
+
+/** 防抖写入 localStorage，避免每个按键同步序列化 */
+function createDebouncedStorage(delayMs: number): StateStorage {
+  let timer: ReturnType<typeof setTimeout> | null = null
+  let pending: { name: string; value: string } | null = null
+  return {
+    getItem: name => localStorage.getItem(name),
+    setItem: (name, value) => {
+      pending = { name, value }
+      if (timer) clearTimeout(timer)
+      timer = setTimeout(() => {
+        if (pending) localStorage.setItem(pending.name, pending.value)
+        pending = null
+        timer = null
+      }, delayMs)
+    },
+    removeItem: name => {
+      if (timer) clearTimeout(timer)
+      pending = null
+      localStorage.removeItem(name)
+    },
+  }
+}
 
 function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).substr(2, 9)
@@ -349,6 +372,8 @@ export const useResumeEditorStore = create<ResumeEditorState>()(
     }),
     {
       name: 'resume-editor-storage',
+      version: 1,
+      storage: createJSONStorage(() => createDebouncedStorage(400)),
       partialize: state => ({ resumes: state.resumes }),
     }
   )

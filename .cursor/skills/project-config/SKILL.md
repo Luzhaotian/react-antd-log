@@ -1,5 +1,7 @@
 ---
 name: project-config
+version: 1.1.0
+updated: 2026-07-19
 description: Manages all project configuration: Vite (dev server, build, resolve, env), TypeScript (tsconfig, compiler options), Ant Design (theming, imports, component patterns), and global styles (UnoCSS, index.css). Use when working with vite.config, tsconfig, uno.config, Ant Design setup, theming, UnoCSS, or any project configuration.
 ---
 
@@ -17,10 +19,12 @@ This skill covers **all configuration-related** setup in one place: **Vite**, **
 
 ## This Project at a Glance
 
-- **Vite**: `vite.config.ts` — React + UnoCSS, alias `@/` → `./src`, port 5173, proxy for Eastmoney APIs.
-- **TypeScript**: Project references; `tsconfig.app.json` (app, strict); `tsconfig.node.json` (Vite config). Use `@/` for `src/`.
-- **Ant Design**: 6.2.1, default theme; reset CSS first in `main.tsx`; use `theme.useToken()` and direct component imports.
-- **UnoCSS**: `uno.config.ts` with presetUno + presetAttributify; shortcuts `flex-center`, `flex-between`; `virtual:uno.css` after antd reset, then `index.css`.
+- **Vite**: React + UnoCSS，`@/` → `src`，port 5173；proxy：`/api`→8080，基金相关 `/fund*` `/datacenter`。
+- **TypeScript**: `tsconfig.app.json` strict；路径 `@/`。
+- **Ant Design**: 6.x；`colorPrimary: #ff4d4f`，locale zhCN（`main.tsx`）。
+- **UnoCSS**: presetUno + attributify；样式顺序 antd reset → uno → index.css。
+- **Build**: 建议 `manualChunks`（见 vite-reference「Project Build Conventions」）。
+- **Env**: `VITE_BASE_PATH`、`VITE_HASH_ROUTER`。
 
 ## Detailed References
 

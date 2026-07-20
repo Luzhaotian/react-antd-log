@@ -4,10 +4,9 @@ const AUTH_USERNAME_KEY = 'username'
 
 const DEFAULT_DISPLAY_NAME = '用户'
 
+/** 仅以有效 token 判定登录，禁止仅靠 isLoggedIn flag 绕过 */
 export function isLoggedIn() {
-  const status = localStorage.getItem(LOGIN_STATUS_KEY) === 'true'
-  const token = localStorage.getItem(AUTH_TOKEN_KEY)
-  return status || Boolean(token)
+  return Boolean(getAuthToken())
 }
 
 export function setLoginStatus(loggedIn: boolean) {
@@ -15,6 +14,10 @@ export function setLoginStatus(loggedIn: boolean) {
 }
 
 export function setAuthSession(token: string, username: string) {
+  if (!token.trim()) {
+    clearAuthSession()
+    return
+  }
   setLoginStatus(true)
   localStorage.setItem(AUTH_TOKEN_KEY, token)
   localStorage.setItem(AUTH_USERNAME_KEY, username)

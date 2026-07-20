@@ -1,14 +1,11 @@
-import { useState, useCallback } from 'react'
-import { Row, Col, Button } from 'antd'
+import { useState, useCallback, lazy, Suspense } from 'react'
+import { Row, Col, Button, Spin } from 'antd'
 import { ReloadOutlined } from '@ant-design/icons'
 import type { TrendData, CategoryData, PieData, PerformanceData } from '@/types'
 import { recentActivities } from '@/constants'
 import {
   PageHeader,
   StatisticCards,
-  TrendChart,
-  CategoryChart,
-  StatusPieChart,
   SystemPerformance,
   RecentActivities,
   QuickActions,
@@ -20,6 +17,18 @@ import {
   generatePerformanceData,
 } from '@/utils'
 
+const TrendChart = lazy(() => import('./components/TrendChart'))
+const CategoryChart = lazy(() => import('./components/CategoryChart'))
+const StatusPieChart = lazy(() => import('./components/StatusPieChart'))
+
+function ChartFallback() {
+  return (
+    <div className="flex-center min-h-[280px]">
+      <Spin />
+    </div>
+  )
+}
+
 function Home() {
   const [trendData, setTrendData] = useState<TrendData[]>(() => generateTrendData())
   const [categoryData, setCategoryData] = useState<CategoryData[]>(() => generateCategoryData())
@@ -28,7 +37,6 @@ function Home() {
     generatePerformanceData()
   )
 
-  // 刷新所有数据 - 使用 useCallback 优化
   const refreshData = useCallback(() => {
     setTrendData(generateTrendData())
     setCategoryData(generateCategoryData())
@@ -42,26 +50,30 @@ function Home() {
 
       <StatisticCards />
 
-      {/* 图表区域 */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24} lg={16}>
-          <TrendChart data={trendData} />
+          <Suspense fallback={<ChartFallback />}>
+            <TrendChart data={trendData} />
+          </Suspense>
         </Col>
         <Col xs={24} lg={8}>
-          <StatusPieChart data={pieData} />
+          <Suspense fallback={<ChartFallback />}>
+            <StatusPieChart data={pieData} />
+          </Suspense>
         </Col>
       </Row>
 
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24} lg={16}>
-          <CategoryChart data={categoryData} />
+          <Suspense fallback={<ChartFallback />}>
+            <CategoryChart data={categoryData} />
+          </Suspense>
         </Col>
         <Col xs={24} lg={8}>
           <SystemPerformance data={performanceData} />
         </Col>
       </Row>
 
-      {/* 最近活动和快速操作 */}
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={16}>
           <RecentActivities activities={recentActivities} />
@@ -71,7 +83,6 @@ function Home() {
         </Col>
       </Row>
 
-      {/* 悬浮刷新按钮 */}
       <Button
         type="primary"
         shape="circle"

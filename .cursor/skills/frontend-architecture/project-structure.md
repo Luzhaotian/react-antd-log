@@ -64,9 +64,11 @@ react-antd-log/
 │   │
 │   ├── hooks/                   # 自定义 Hooks（全局共享）
 │   │   ├── useDocumentTitle.ts
-│   │   ├── useStableFn.ts
 │   │   ├── useQrCodeManager.ts
 │   │   └── useMortgageCalculatorDrawer.ts
+│   │
+│   ├── private/                 # 私有/本地数据（不提交敏感内容时注意 gitignore）
+│   │   └── fund-portfolio/
 │   │
 │   ├── layout/                  # 布局组件
 │   │   ├── MainLayout.tsx       #   主布局
@@ -77,30 +79,17 @@ react-antd-log/
 │   │       └── Logo/            #   Logo 组件
 │   │
 │   ├── pages/                   # 页面模块（按业务模块建目录）
-│   │   ├── Fund/                #   基金模块
-│   │   │   ├── index.tsx        #     主页（列表+图表）
-│   │   │   └── components/      #     私有子组件
 │   │   ├── Home/
-│   │   │   └── index.tsx
-│   │   ├── Login/
-│   │   │   └── index.tsx
-│   │   ├── NotFound/
-│   │   │   └── index.tsx
+│   │   ├── Fund/                #   基金监控（含 components、privateBootstrap）
+│   │   ├── Tools/               #   CodeCompress / JsonViewer / FileRename / QrCode
+│   │   ├── User/
+│   │   ├── UserRequirement/     #   车贷 / 房贷 / 贷款追踪
+│   │   ├── AiResume/            #   AI 简历（与 ResumeEditor 宜收敛）
+│   │   ├── ResumeEditor/        #   简历编辑器（store/Zustand、services、templates）
 │   │   ├── Settings/
-│   │   │   ├── Basic.tsx
-│   │   │   └── Advanced.tsx
 │   │   ├── Test/
-│   │   │   └── ...
-│   │   ├── Tools/               #   工具包模块
-│   │   │   ├── CodeCompress.tsx
-│   │   │   ├── JsonViewer.tsx
-│   │   │   ├── FileRename.tsx
-│   │   │   └── QrCode.tsx
-│   │   ├── User/                #   用户模块
-│   │   │   ├── List.tsx
-│   │   │   └── Detail.tsx
-│   │   └── UserRequirement/     #   用户需求模块
-│   │       └── ...
+│   │   ├── Login/
+│   │   └── NotFound/
 │   │
 │   ├── routes/                  # 路由配置（按模块拆分）
 │   │   ├── index.tsx            #   汇总所有路由
@@ -110,6 +99,8 @@ react-antd-log/
 │   │       ├── tools.tsx
 │   │       ├── user.tsx
 │   │       ├── userRequirement.tsx
+│   │       ├── aiResume.tsx
+│   │       ├── resumeEditor.tsx
 │   │       ├── settings.tsx
 │   │       ├── test.tsx
 │   │       └── error.tsx
@@ -139,8 +130,7 @@ react-antd-log/
 │   │       ├── Tools/
 │   │       └── UserRequirement/
 │   │
-│   ├── App.tsx                  # 应用根组件
-│   ├── main.tsx                 # 入口文件
+│   ├── main.tsx                 # 唯一入口：ConfigProvider + Router
 │   ├── index.css                # 全局 CSS（View Transitions 动画）
 │   └── vite-env.d.ts            # Vite 类型声明
 │
@@ -295,3 +285,11 @@ import DetailCard from './components/DetailCard'
 - [ ] 导入路径使用 `@/` 别名
 - [ ] 组件文档已同步更新
 - [ ] 目录层级不超过 3 层
+
+---
+
+## 七、性能相关结构约定
+
+- 重型依赖（echarts / xlsx / pdf / mammoth / jspdf）放在使用点动态加载，不要在 `utils/index.ts` barrel 再导出。
+- 页面私有重逻辑放 `pages/<Module>/services/` 或 `utils/pages/<Module>/`，按需 import。
+- 复杂域状态可用 `pages/<Module>/store/`（Zustand），不要新建全局 `src/stores/` 除非跨多模块共享。

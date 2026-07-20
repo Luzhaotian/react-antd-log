@@ -1,7 +1,8 @@
 import { DEFAULT_LOAN_PARAMS } from '@/constants/loanTracker'
 import { IDB_KEYS, STORAGE_KEYS } from '@/constants'
 import type { LoanTrackerRecord, RepaymentStatus } from '@/types'
-import { idbGet, idbSet, storage } from '@/utils'
+import { idbGet, idbSet } from '@/utils/common/idb'
+import { storage } from '@/utils/common/storage'
 
 /**
  * 生成唯一 id

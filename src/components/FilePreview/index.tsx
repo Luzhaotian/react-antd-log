@@ -1,19 +1,38 @@
-import { useEffect, useMemo, useState, useRef } from 'react'
+import { useEffect, useMemo, useState, useRef, type ComponentType } from 'react'
 import { Empty, Spin, Typography, Tabs, Button } from 'antd'
 import { FileUnknownOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
-import * as XLSX from 'xlsx'
-import { renderAsync } from 'docx-preview'
-import { pdfjs, Document, Page } from 'react-pdf'
-import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url'
-import 'react-pdf/dist/Page/AnnotationLayer.css'
-import 'react-pdf/dist/Page/TextLayer.css'
 import { PREVIEW_TYPE } from '@/constants'
 import type { FilePreviewProps } from '@/types'
 import { getPreviewType } from '@/utils'
 
-pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl
-
 const { Text } = Typography
+
+type PdfModules = {
+  Document: ComponentType<{
+    file: string
+    loading?: React.ReactNode
+    onLoadSuccess?: (info: { numPages: number }) => void
+    children?: React.ReactNode
+  }>
+  Page: ComponentType<{
+    pageNumber: number
+    loading?: React.ReactNode
+    renderTextLayer?: boolean
+    renderAnnotationLayer?: boolean
+    className?: string
+  }>
+}
+
+async function ensurePdfModules(): Promise<PdfModules> {
+  const [{ pdfjs, Document, Page }, workerMod] = await Promise.all([
+    import('react-pdf'),
+    import('pdfjs-dist/build/pdf.worker.mjs?url'),
+    import('react-pdf/dist/Page/AnnotationLayer.css'),
+    import('react-pdf/dist/Page/TextLayer.css'),
+  ])
+  pdfjs.GlobalWorkerOptions.workerSrc = workerMod.default
+  return { Document, Page }
+}
 
 function FilePreview({
   file,
@@ -29,6 +48,7 @@ function FilePreview({
   >([])
   const [pdfPage, setPdfPage] = useState(1)
   const [pdfTotal, setPdfTotal] = useState(0)
+  const [pdfMods, setPdfMods] = useState<PdfModules | null>(null)
   const wordContainerRef = useRef<HTMLDivElement>(null)
 
   const supportType = useMemo(() => (file ? getPreviewType(file) : null), [file])
@@ -40,6 +60,7 @@ function FilePreview({
       setExcelSheets([])
       setPdfPage(1)
       setPdfTotal(0)
+      setPdfMods(null)
       return
     }
 
@@ -51,14 +72,18 @@ function FilePreview({
       return
     }
 
+    let revokedUrl: string | null = null
+    let cancelled = false
     setLoading(true)
     setError(null)
     setExcelSheets([])
 
-    if (supportType === PREVIEW_TYPE.EXCEL) {
-      file
-        .arrayBuffer()
-        .then(ab => {
+    const run = async () => {
+      try {
+        if (supportType === PREVIEW_TYPE.EXCEL) {
+          const XLSX = await import('xlsx')
+          if (cancelled) return
+          const ab = await file.arrayBuffer()
           const wb = XLSX.read(ab)
           const items = wb.SheetNames.map((name: string) => {
             const ws = wb.Sheets[name]
@@ -67,42 +92,63 @@ function FilePreview({
             return { key: name, label: name, data: aoa }
           })
           setExcelSheets(items)
-        })
-        .catch(() => setError('Excel 解析失败'))
-        .finally(() => setLoading(false))
-      return
-    }
+          return
+        }
 
-    if (supportType === PREVIEW_TYPE.WORD) {
-      file
-        .arrayBuffer()
-        .then(ab => {
-          const container = wordContainerRef.current
-          if (container) {
-            container.innerHTML = ''
-            renderAsync(ab, container, undefined, {
-              experimental: true,
-              inWrapper: false,
-            }).finally(() => setLoading(false))
-          } else {
-            setLoading(false)
-          }
-        })
-        .catch(() => {
-          setError('Word 解析失败')
+        if (supportType === PREVIEW_TYPE.WORD) {
+          // 容器在下方始终挂载，下一帧再渲染，保证 ref 可用
           setLoading(false)
-        })
-      return
+          await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
+          if (cancelled) return
+          const { renderAsync } = await import('docx-preview')
+          const container = wordContainerRef.current
+          if (!container) return
+          container.innerHTML = ''
+          setLoading(true)
+          const ab = await file.arrayBuffer()
+          await renderAsync(ab, container, undefined, {
+            experimental: true,
+            inWrapper: false,
+          })
+          return
+        }
+
+        if (supportType === PREVIEW_TYPE.PDF) {
+          const mods = await ensurePdfModules()
+          if (cancelled) return
+          setPdfMods(mods)
+          setPdfPage(1)
+          setPdfTotal(0)
+        }
+
+        const url = URL.createObjectURL(file)
+        revokedUrl = url
+        if (cancelled) {
+          URL.revokeObjectURL(url)
+          return
+        }
+        setObjectUrl(url)
+      } catch {
+        if (!cancelled) {
+          setError(
+            supportType === PREVIEW_TYPE.EXCEL
+              ? 'Excel 解析失败'
+              : supportType === PREVIEW_TYPE.WORD
+                ? 'Word 解析失败'
+                : '文件预览失败'
+          )
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
     }
 
-    const url = URL.createObjectURL(file)
-    setObjectUrl(url)
-    setLoading(false)
-    if (supportType === PREVIEW_TYPE.PDF) {
-      setPdfPage(1)
-      setPdfTotal(0)
+    void run()
+
+    return () => {
+      cancelled = true
+      if (revokedUrl) URL.revokeObjectURL(revokedUrl)
     }
-    return () => URL.revokeObjectURL(url)
   }, [file, supportType])
 
   if (!file) {
@@ -136,7 +182,11 @@ function FilePreview({
   const waitingForContent =
     supportType === PREVIEW_TYPE.EXCEL
       ? excelSheets.length === 0
-      : supportType !== PREVIEW_TYPE.WORD && !objectUrl
+      : supportType === PREVIEW_TYPE.WORD
+        ? loading
+        : supportType === PREVIEW_TYPE.PDF
+          ? !objectUrl || !pdfMods
+          : !objectUrl
   if (loading && waitingForContent) {
     return (
       <div
@@ -161,7 +211,8 @@ function FilePreview({
         />
       )
     }
-    if (supportType === PREVIEW_TYPE.PDF && objectUrl) {
+    if (supportType === PREVIEW_TYPE.PDF && objectUrl && pdfMods) {
+      const { Document, Page } = pdfMods
       return (
         <div className="flex flex-col" style={{ height }}>
           <div className="flex shrink-0 items-center justify-center gap-2 border-b border-gray-200 bg-gray-50 py-1">

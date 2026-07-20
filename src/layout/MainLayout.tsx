@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense, useMemo, useCallback } from 'react'
+import { useState, Suspense, useMemo, useCallback } from 'react'
 import { Layout, Menu, theme, Spin, Avatar, Dropdown } from 'antd'
 import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined } from '@ant-design/icons'
 import { useNavigate, useLocation, Outlet } from 'react-router-dom'
@@ -13,31 +13,21 @@ import { clearAuthSession } from '@/utils'
 const { Header, Sider, Content } = Layout
 
 function MainLayout() {
-  // 自动更新浏览器标题
   useDocumentTitle()
 
   const [collapsed, setCollapsed] = useState(false)
-  const [selectedKeys, setSelectedKeys] = useState<string[]>(['/'])
-  const [openKeys, setOpenKeys] = useState<string[]>([])
+  /** 用户手动展开过的 openKeys，按路径缓存；未缓存时用路由派生值 */
+  const [openKeysByPath, setOpenKeysByPath] = useState<Record<string, string[]>>({})
   const navigate = useNavigate()
   const location = useLocation()
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken()
 
-  // 根据路由更新选中的菜单项 - 使用 useMemo 优化
-  const menuState = useMemo(() => {
-    const keys = getSelectedKeys(location.pathname)
-    const opens = getOpenKeys(location.pathname)
-    return { keys, opens }
-  }, [location.pathname])
+  const selectedKeys = useMemo(() => getSelectedKeys(location.pathname), [location.pathname])
+  const routeOpenKeys = useMemo(() => getOpenKeys(location.pathname), [location.pathname])
+  const openKeys = openKeysByPath[location.pathname] ?? routeOpenKeys
 
-  useEffect(() => {
-    setSelectedKeys(menuState.keys)
-    setOpenKeys(menuState.opens)
-  }, [menuState])
-
-  // 菜单点击处理 - 使用 useCallback 优化，启用 View Transitions
   const handleMenuClick = useCallback(
     ({ key }: { key: string }) => {
       navigate(key, { viewTransition: true })
@@ -45,12 +35,13 @@ function MainLayout() {
     [navigate]
   )
 
-  // 菜单展开/收起处理 - 使用 useCallback 优化
-  const handleOpenChange = useCallback((keys: string[]) => {
-    setOpenKeys(keys)
-  }, [])
+  const handleOpenChange = useCallback(
+    (keys: string[]) => {
+      setOpenKeysByPath(prev => ({ ...prev, [location.pathname]: keys }))
+    },
+    [location.pathname]
+  )
 
-  // 切换折叠状态 - 使用 useCallback 优化
   const toggleCollapsed = useCallback(() => {
     setCollapsed(prev => !prev)
   }, [])

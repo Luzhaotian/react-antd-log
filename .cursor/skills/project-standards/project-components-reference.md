@@ -130,6 +130,8 @@ Card + 内联 Form，支持搜索/重置、可展开收起。
 <FilePreview file={file} height={420} showFileName />
 ```
 
+**审查约定**：实现内应按文件类型动态 `import()`（xlsx / docx-preview / react-pdf），避免组件顶层静态打包全部预览引擎。
+
 ---
 
 ## 7. PageDetail

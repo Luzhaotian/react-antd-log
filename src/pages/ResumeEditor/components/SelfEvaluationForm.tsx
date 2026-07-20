@@ -5,7 +5,8 @@ const { TextArea } = Input
 const { Title, Paragraph } = Typography
 
 export default function SelfEvaluationForm() {
-  const { currentResume, updateSelfEvaluationContent } = useResumeEditorStore()
+  const currentResume = useResumeEditorStore(s => s.currentResume)
+  const updateSelfEvaluationContent = useResumeEditorStore(s => s.updateSelfEvaluationContent)
   if (!currentResume) return null
 
   return (

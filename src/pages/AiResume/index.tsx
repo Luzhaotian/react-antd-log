@@ -16,6 +16,7 @@ import { getResumeTemplateById } from './templates'
 import AIConfigDrawer from './components/AIConfigDrawer'
 import ResumeEditDrawer from './components/ResumeEditDrawer'
 import ResumePreview from './components/ResumePreview'
+import { getSavedAIConfig } from '@/utils/aiConfig'
 import './index.css'
 
 const STORAGE_KEY = 'ai-resume-list'
@@ -35,10 +36,9 @@ function saveResumes(resumes: ResumeItem[]) {
 
 export default function MyResumes() {
   const [resumes, setResumes] = useState<ResumeItem[]>(loadResumes)
-  const [aiConfig, setAiConfig] = useState<ResumeAIConfig | null>(() => {
-    const saved = localStorage.getItem('ai-resume-config')
-    return saved ? JSON.parse(saved) : null
-  })
+  const [aiConfig, setAiConfig] = useState<ResumeAIConfig | null>(
+    () => getSavedAIConfig() as ResumeAIConfig | null
+  )
   const [keyword, setKeyword] = useState('')
 
   const [configDrawerOpen, setConfigDrawerOpen] = useState(false)

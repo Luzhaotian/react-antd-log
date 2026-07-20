@@ -4,9 +4,9 @@ import { useResumeEditorStore } from '../store'
 const { Title } = Typography
 
 export default function BasicInfoForm() {
-  const { currentResume, updateBasicInfo } = useResumeEditorStore()
-  if (!currentResume) return null
-  const { basic } = currentResume
+  const basic = useResumeEditorStore(s => s.currentResume?.basic)
+  const updateBasicInfo = useResumeEditorStore(s => s.updateBasicInfo)
+  if (!basic) return null
 
   return (
     <div>

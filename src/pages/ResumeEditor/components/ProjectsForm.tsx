@@ -5,7 +5,10 @@ import { useResumeEditorStore } from '../store'
 const { TextArea } = Input
 
 export default function ProjectsForm() {
-  const { currentResume, addProject, updateProject, removeProject } = useResumeEditorStore()
+  const currentResume = useResumeEditorStore(s => s.currentResume)
+  const addProject = useResumeEditorStore(s => s.addProject)
+  const updateProject = useResumeEditorStore(s => s.updateProject)
+  const removeProject = useResumeEditorStore(s => s.removeProject)
   if (!currentResume) return null
 
   return (

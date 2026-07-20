@@ -1,4 +1,5 @@
 import { DATA_CENTER_URL } from '@/constants'
+import { request } from '@/utils/request'
 
 /**
  * 获取某个地区的利率是否需要地址？
@@ -14,8 +15,9 @@ import { DATA_CENTER_URL } from '@/constants'
 export async function fetchLatestLPR(): Promise<number | null> {
   try {
     const url = `${DATA_CENTER_URL}/api/data/v1/get?reportName=RPTA_APP_LPR&columns=TRADE_DATE,LPR1Y,LPR5Y&pageNumber=1&pageSize=1&sortColumns=TRADE_DATE&sortTypes=-1`
-    const res = await fetch(url, { cache: 'no-store' })
-    const data = await res.json()
+    const data = await request<{ result?: { data?: Array<{ LPR5Y?: number }> } }>(url, {
+      cache: 'no-store',
+    })
     const list = data?.result?.data
     if (Array.isArray(list) && list.length > 0 && list[0].LPR5Y != null) {
       const rate = Number(list[0].LPR5Y)

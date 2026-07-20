@@ -9,28 +9,19 @@
 ### 1.1 路由树结构
 
 ```
-RouterProvider
-├── /login                    → Login（无布局，无鉴权）
+RouterProvider（组装于 main.tsx）
+├── /login                    → Login（建议懒加载）
 └── /                         → RequireAuth → MainLayout
-    ├── /                     → Home（首页仪表盘）
-    ├── /invest
-    │   └── fund              → Fund（基金实时监控）
-    ├── /tools
-    │   ├── code-compress     → CodeCompress
-    │   ├── json-viewer        → JsonViewer
-    │   ├── file-rename        → FileRename
-    │   └── qrcode             → QrCode
-    ├── /user
-    │   ├── list               → UserList
-    │   └── detail/:id?        → UserDetail（动态路由）
-    ├── /user-requirement
-    │   ├── mortgage-list      → MortgageList
-    │   └── car-loan-list      → CarLoanList
-    ├── /settings
-    │   ├── basic              → BasicSettings
-    │   └── advanced           → AdvancedSettings
-    ├── /test/*                → 设计稿测试页
-    └── *                      → NotFound（404）
+    ├── /                     → Home
+    ├── /invest/fund          → Fund
+    ├── /tools/*              → code-compress / json-viewer / file-rename / qr-code
+    ├── /user/*               → list / detail/:id?
+    ├── /user-requirement/*   → car-loan-calculator / mortgage-calculator / loan-tracker
+    ├── /ai-resume/*          → AiResume（与 ResumeEditor 宜收敛）
+    ├── /resume-editor/*      → templates / list / workbench/:id（Zustand）
+    ├── /settings/*           → index / basic / advanced
+    ├── /test/*               → 设计稿测试页
+    └── *                     → NotFound
 ```
 
 ### 1.2 路由类型定义
@@ -59,14 +50,16 @@ type ExtendedRouteObject = RouteObject & {
 src/routes/
 ├── index.tsx                  # 汇总所有路由
 ├── modules/                   # 按功能模块拆分
-│   ├── home.tsx               # 首页路由
-│   ├── invest.tsx             # 投资理财路由
-│   ├── tools.tsx              # 工具包路由
-│   ├── user.tsx               # 用户管理路由
-│   ├── userRequirement.tsx    # 用户需求路由
-│   ├── settings.tsx           # 设置路由
-│   ├── test.tsx               # 测试路由
-│   └── error.tsx              # 404 路由
+│   ├── home.tsx
+│   ├── invest.tsx
+│   ├── tools.tsx
+│   ├── user.tsx
+│   ├── userRequirement.tsx
+│   ├── aiResume.tsx
+│   ├── resumeEditor.tsx
+│   ├── settings.tsx
+│   ├── test.tsx
+│   └── error.tsx
 ```
 
 ### 2.2 路由模块示例

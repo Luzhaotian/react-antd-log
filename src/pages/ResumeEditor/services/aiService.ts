@@ -2,6 +2,10 @@
 // Uses AI to parse uploaded file content into structured resume data
 
 import type { ResumeData } from '../types'
+import {
+  getSavedAIConfig as getSharedAIConfig,
+  saveAIConfig as saveSharedAIConfig,
+} from '@/utils/aiConfig'
 
 export interface AIResumeConfig {
   provider: 'openai' | 'deepseek' | 'custom'
@@ -316,30 +320,19 @@ function mapToResumeData(data: unknown): Partial<ResumeData> {
   return result
 }
 
-/**
- * Get saved AI config from localStorage
- */
+/** 读取 AI 配置（apiKey 仅 sessionStorage） */
 export function getSavedAIConfig(): AIResumeConfig | null {
-  try {
-    const saved = localStorage.getItem('ai-resume-config')
-    if (saved) {
-      const config = JSON.parse(saved)
-      return {
-        provider: config.provider || 'openai',
-        apiKey: config.apiKey || '',
-        baseUrl: config.baseUrl,
-        model: config.model || '',
-      }
-    }
-  } catch {
-    // Ignore
+  const config = getSharedAIConfig()
+  if (!config) return null
+  return {
+    provider: (config.provider as AIResumeConfig['provider']) || 'openai',
+    apiKey: config.apiKey || '',
+    baseUrl: config.baseUrl,
+    model: config.model || '',
   }
-  return null
 }
 
-/**
- * Save AI config to localStorage
- */
+/** 保存 AI 配置（偏好 localStorage，密钥 sessionStorage） */
 export function saveAIConfig(config: AIResumeConfig): void {
-  localStorage.setItem('ai-resume-config', JSON.stringify(config))
+  saveSharedAIConfig(config)
 }

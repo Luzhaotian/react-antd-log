@@ -5,7 +5,8 @@ const { TextArea } = Input
 const { Title, Paragraph } = Typography
 
 export default function SkillsForm() {
-  const { currentResume, updateSkillContent } = useResumeEditorStore()
+  const currentResume = useResumeEditorStore(s => s.currentResume)
+  const updateSkillContent = useResumeEditorStore(s => s.updateSkillContent)
   if (!currentResume) return null
 
   return (

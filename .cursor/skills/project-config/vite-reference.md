@@ -161,3 +161,36 @@ export default defineConfig({
 ```
 
 Keep `tsconfig.app.json` (and any app tsconfig) in sync: `"paths": { "@/*": ["./src/*"] }`, `"baseUrl": "."`.
+
+---
+
+## Project Build Conventions（本仓库）
+
+入口体积偏大时优先做：
+
+1. **manualChunks**：将 `react` / `react-dom` / `react-router-dom`、`antd`、`@ant-design/icons`、以及 `echarts*` / `xlsx` / `pdf*` / `jspdf*` 等拆到独立 chunk。
+2. **薄入口**：`main.tsx` 只保留 Router 壳；`Login` 与业务页一律 `lazy`。
+3. **不要**仅靠提高 `chunkSizeWarningLimit` 掩盖问题。
+4. 代理约定见仓库根 `vite.config.ts`：`/api` → `127.0.0.1:8080`；基金相关 `/fundapi` `/fundgz` `/fundsuggest` `/funddata` `/datacenter`。
+5. `base` 由 `VITE_BASE_PATH` 注入；Hash 模式由 `VITE_HASH_ROUTER` 控制（逻辑在 `main.tsx`）。
+
+示例：
+
+```typescript
+build: {
+  rollupOptions: {
+    output: {
+      manualChunks(id) {
+        if (id.includes('node_modules')) {
+          if (id.includes('antd') || id.includes('@ant-design')) return 'antd'
+          if (id.includes('echarts')) return 'echarts'
+          if (id.includes('xlsx') || id.includes('jspdf') || id.includes('pdfjs') || id.includes('react-pdf'))
+            return 'docs'
+          if (id.includes('react-dom') || id.includes('react-router') || id.includes('/react/'))
+            return 'react-vendor'
+        }
+      },
+    },
+  },
+},
+```

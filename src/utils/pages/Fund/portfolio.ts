@@ -2,7 +2,7 @@ import dayjs from 'dayjs'
 import timezone from 'dayjs/plugin/timezone'
 import utc from 'dayjs/plugin/utc'
 import type { FundHolding, FundHoldingMetrics, FundHoldingsMap, FundInfo } from '@/types'
-import { idbGet, idbSet } from '@/utils'
+import { idbGet, idbSet } from '@/utils/common/idb'
 import { IDB_KEYS } from '@/constants'
 
 dayjs.extend(utc)

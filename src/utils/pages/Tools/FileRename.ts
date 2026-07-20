@@ -1,6 +1,6 @@
 import dayjs, { type Dayjs } from 'dayjs'
 import type { FileRenameItem, FileRenameTemplateConfig, StoredItem, TemplateType } from '@/types'
-import { idbGet, idbSet, idbDel } from '@/utils'
+import { idbGet, idbSet, idbDel } from '@/utils/common/idb'
 import {
   IDB_KEYS,
   PICKER_TYPE,

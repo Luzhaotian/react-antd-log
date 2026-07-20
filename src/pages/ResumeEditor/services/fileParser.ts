@@ -1,11 +1,6 @@
 // File parser service for resume import
 // Supports: JSON, PDF, Word (.docx), Markdown (.md)
-
-import * as pdfjsLib from 'pdfjs-dist'
-import mammoth from 'mammoth'
-
-// Set up PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
+// 重型依赖按扩展名动态加载
 
 export interface ParsedFileContent {
   text: string
@@ -131,9 +126,15 @@ function jsonToReadableText(data: unknown, prefix = ''): string {
  * Parse PDF file using pdf.js
  */
 async function parsePdfFile(file: File): Promise<string> {
+  const [{ getDocument, GlobalWorkerOptions }, workerMod] = await Promise.all([
+    import('pdfjs-dist'),
+    import('pdfjs-dist/build/pdf.worker.mjs?url'),
+  ])
+  GlobalWorkerOptions.workerSrc = workerMod.default
+
   const arrayBuffer = await readFileAsArrayBuffer(file)
 
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+  const pdf = await getDocument({ data: arrayBuffer }).promise
   const textParts: string[] = []
 
   for (let i = 1; i <= pdf.numPages; i++) {
@@ -155,6 +156,7 @@ async function parsePdfFile(file: File): Promise<string> {
  * Parse Word document using mammoth
  */
 async function parseWordFile(file: File): Promise<string> {
+  const mammoth = await import('mammoth')
   const arrayBuffer = await readFileAsArrayBuffer(file)
 
   const result = await mammoth.extractRawText({ arrayBuffer })

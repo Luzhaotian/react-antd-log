@@ -3,6 +3,7 @@ import { Drawer, Button, Input, Select, Space, message, Tag } from 'antd'
 import { EyeInvisibleOutlined, EyeOutlined, SyncOutlined } from '@ant-design/icons'
 import type { ResumeAIConfig, ResumeModelInfo } from '@/types'
 import { AI_PROVIDERS, fetchModels } from '../services/aiService'
+import { saveAIConfig } from '@/utils/aiConfig'
 
 interface AIConfigDrawerProps {
   open: boolean
@@ -69,7 +70,7 @@ export default function AIConfigDrawer({
       baseUrl: provider === 'custom' ? customBaseUrl.trim() : undefined,
     }
 
-    localStorage.setItem('ai-resume-config', JSON.stringify(newConfig))
+    saveAIConfig(newConfig)
     onConfigChange(newConfig)
     message.success('AI 配置已保存')
     onClose()

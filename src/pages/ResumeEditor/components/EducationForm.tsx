@@ -5,7 +5,10 @@ import { useResumeEditorStore } from '../store'
 const { TextArea } = Input
 
 export default function EducationForm() {
-  const { currentResume, addEducation, updateEducation, removeEducation } = useResumeEditorStore()
+  const currentResume = useResumeEditorStore(s => s.currentResume)
+  const addEducation = useResumeEditorStore(s => s.addEducation)
+  const updateEducation = useResumeEditorStore(s => s.updateEducation)
+  const removeEducation = useResumeEditorStore(s => s.removeEducation)
   if (!currentResume) return null
 
   return (

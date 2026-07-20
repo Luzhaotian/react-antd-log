@@ -8,8 +8,7 @@ export * from './Tools/CodeCompress'
 export * from './Tools/JsonViewer'
 /** 用户需求 - 房贷计算机 */
 export * from './UserRequirement/MortgageCalculator'
-/** 用户需求 - 房贷计算导出 */
-export * from './UserRequirement/exportMortgage'
+/** 房贷导出（xlsx/jspdf）请直接：@/utils/pages/UserRequirement/exportMortgage */
 /** 用户需求 - 房贷还款追踪 */
 export * from './UserRequirement/loanTracker'
 /** 二维码管理相关工具 */
