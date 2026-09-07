@@ -185,7 +185,7 @@ react-antd-log/
 │   ├── pages/
 │   ├── private/          # 本机私有数据（gitignore）
 │   ├── routes/modules/   # 路由模块（菜单由此派生）
-│   ├── test/             # Vitest setup
+│   ├── test/             # 单元测试（setup + 按 utils 镜像组织，不与源码混放）
 │   ├── types/
 │   └── utils/            # auth、request、logger 等
 ├── .github/

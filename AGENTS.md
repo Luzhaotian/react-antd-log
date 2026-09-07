@@ -51,7 +51,7 @@ src/
 ├── types/          # TypeScript 类型
 ├── utils/          # 工具（auth / request / logger …）
 ├── private/        # 本机私有数据（gitignore，不提交）
-└── test/           # Vitest setup
+└── test/           # 单元测试（与源码分离；setup + utils 镜像用例）
 ```
 
 **路由驱动**：菜单、面包屑、`document.title` 均来自 `routes/modules/*` 的 `meta`，勿在布局里硬编码一份。
