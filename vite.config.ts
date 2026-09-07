@@ -1,12 +1,20 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import UnoCSS from 'unocss/vite'
 import path from 'path'
+import { readFileSync } from 'node:fs'
+
+const pkg = JSON.parse(readFileSync(path.resolve(__dirname, './package.json'), 'utf-8')) as {
+  version: string
+}
 
 // https://vite.dev/config/
 // 部署到 GitHub Pages 子路径时由 CI 注入 VITE_BASE_PATH，例如 /react-antd-log/
 export default defineConfig({
   base: process.env.VITE_BASE_PATH || '/',
+  define: {
+    __APP_VERSION__: JSON.stringify(process.env.VITE_APP_VERSION || pkg.version),
+  },
   plugins: [react(), UnoCSS()],
   resolve: {
     alias: {
@@ -20,25 +28,35 @@ export default defineConfig({
           // 仅按 node_modules 包名拆分；避免匹配到仓库路径 react-antd-log
           const nm = id.split('node_modules/')[1] || id.split('node_modules\\')[1]
           if (!nm) return
-          const pkg = nm.startsWith('@')
+          const pkgName = nm.startsWith('@')
             ? nm.split('/').slice(0, 2).join('/')
             : nm.split('/')[0]
-          if (pkg === 'antd' || pkg.startsWith('@ant-design/')) return 'antd'
-          if (pkg === 'echarts' || pkg === 'echarts-for-react' || pkg.startsWith('echarts-'))
-            return 'echarts'
+          if (pkgName === 'antd' || pkgName.startsWith('@ant-design/')) return 'antd'
           if (
-            pkg === 'xlsx' ||
-            pkg === 'jspdf' ||
-            pkg === 'jspdf-autotable' ||
-            pkg === 'jspdf-font' ||
-            pkg === 'pdfjs-dist' ||
-            pkg === 'react-pdf' ||
-            pkg === 'docx-preview' ||
-            pkg === 'mammoth'
+            pkgName === 'echarts' ||
+            pkgName === 'echarts-for-react' ||
+            pkgName.startsWith('echarts-')
+          ) {
+            return 'echarts'
+          }
+          if (
+            pkgName === 'xlsx' ||
+            pkgName === 'jspdf' ||
+            pkgName === 'jspdf-autotable' ||
+            pkgName === 'jspdf-font' ||
+            pkgName === 'pdfjs-dist' ||
+            pkgName === 'react-pdf' ||
+            pkgName === 'docx-preview' ||
+            pkgName === 'mammoth'
           ) {
             return 'docs'
           }
-          if (pkg === 'react' || pkg === 'react-dom' || pkg === 'react-router' || pkg === 'react-router-dom') {
+          if (
+            pkgName === 'react' ||
+            pkgName === 'react-dom' ||
+            pkgName === 'react-router' ||
+            pkgName === 'react-router-dom'
+          ) {
             return 'react-vendor'
           }
         },
@@ -85,5 +103,11 @@ export default defineConfig({
         secure: false,
       },
     },
+  },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    setupFiles: ['./src/test/setup.ts'],
   },
 })

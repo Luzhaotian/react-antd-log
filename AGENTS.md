@@ -1,60 +1,100 @@
-# React + Ant Design 热点收集管理系统
+# AGENTS.md — 项目事实源（工具无关）
 
-> Claude Code 用户：先看 `CLAUDE.md`（工具配置索引），项目细节以本文为准。
+> **职责**：本仓库的产品定位、命令、目录、约定与部署要点。
+> Cursor、Claude Code、人类开发者共用；**不写**某一 AI 工具的专属配置。
+> Claude Code 请另读 [`CLAUDE.md`](./CLAUDE.md)；Cursor 规则/Skills 见 [`.cursor/`](./.cursor/)。
 
-## Project
+---
 
-React 19 + TypeScript + Ant Design 6 后台管理系统，使用 Vite 7 构建，支持 Hash/History 路由切换，部署于 GitHub Pages。
+## 项目是什么
 
-**入口**: `src/main.tsx` → `RequireAuth` → `src/layout/MainLayout.tsx`（`App.tsx` 已移除）
+React 19 + TypeScript + Ant Design 6 中后台，Vite 7 构建；支持 History / Hash 路由，可部署 GitHub Pages。
 
-## Commands
+| 项           | 说明                                                                   |
+| ------------ | ---------------------------------------------------------------------- |
+| 入口         | `src/main.tsx` → `/login` 或 `RequireAuth` → `MainLayout` → 懒加载页面 |
+| 主题         | 主色 `#ff4d4f`，antd `zhCN`                                            |
+| 鉴权（当前） | 前端 mock 登录 + localStorage token；无真实后端                        |
+
+---
+
+## 命令
 
 ```bash
-npm run dev          # 开发服务器 (http://localhost:5173)
-npm run build        # 构建生产版本 (tsc -b && vite build)
-npm run preview      # 预览生产构建
-npm run lint         # ESLint 检查
+npm run dev          # http://localhost:5173
+npm run build        # tsc -b && vite build
+npm run preview      # 预览 dist
+npm run lint         # ESLint
 npm run lint:fix     # ESLint 自动修复
-npm run format       # Prettier 格式化
+npm run test         # Vitest（单次）
+npm run test:watch   # Vitest 监听
+npm run format       # Prettier 写入
 npm run format:check # Prettier 检查
 ```
 
-## Architecture
+质量门禁：本地 Husky + lint-staged；CI 见 `.github/workflows/ci.yml`（lint → test → build）。
+
+---
+
+## 目录速览
 
 ```
 src/
-├── api/            # API 请求封装
-├── components/     # 公共组件 (DataTable, SearchBar, Pagination, TextButton, RequireAuth)
-├── config/         # 配置文件 (routes.ts)
-├── constants/      # 常量定义 (APP_NAME 等)
-├── hooks/          # 自定义 Hooks (useDocumentTitle)
-├── layout/         # 布局组件 (MainLayout, Logo, Breadcrumb, menu配置)
-├── pages/          # 页面组件 (Home, Fund, Tools, User, Settings, Login, NotFound)
-├── routes/         # 路由配置 (模块化: home, invest, tools, user, settings, test, error)
-├── types/          # TypeScript 类型定义
-└── utils/          # 工具函数 (clearAuthSession 等)
+├── api/            # 请求封装（基金、房贷等）
+├── components/     # 通用组件（ListPage / DataTable / ErrorBoundary …）
+├── config/         # 路由→标题等配置逻辑
+├── constants/      # 按领域常量（含 APP_NAME / APP_VERSION）
+├── hooks/          # 全局 Hooks
+├── layout/         # MainLayout、菜单、面包屑、Logo
+├── pages/          # 业务页（按模块目录）
+├── routes/modules/ # 路由模块（懒加载，菜单由此派生）
+├── types/          # TypeScript 类型
+├── utils/          # 工具（auth / request / logger …）
+├── private/        # 本机私有数据（gitignore，不提交）
+└── test/           # Vitest setup
 ```
 
-**核心模块**:
+**路由驱动**：菜单、面包屑、`document.title` 均来自 `routes/modules/*` 的 `meta`，勿在布局里硬编码一份。
 
-- `src/routes/modules/` - 路由按功能模块拆分，支持懒加载
-- `src/layout/config/menu.tsx` - 菜单配置，与路由联动
-- `src/components/` - 公共组件，支持 DataTable/SearchBar/Pagination 组合
+---
 
-## Conventions
+## 约定（摘要）
 
-- **路径别名**: 使用 `@/` 引用 `src` 目录，禁止相对路径
-- **路由懒加载**: 页面组件使用 `lazy()` 动态导入
-- **状态优化**: 使用 `useMemo`/`useCallback` 优化性能
-- **页面过渡**: 使用 View Transitions API (`navigate(key, { viewTransition: true })`)
-- **主题**: 红色主题色 `#ff4d4f`，中文 locale (`zhCN`)
-- **格式化**: Prettier 单引号、无分号、2空格缩进、100字符行宽
-- **Lint**: ESLint 9 Flat Config + TypeScript ESLint + Prettier 集成
-- **Git Hooks**: Husky + lint-staged，提交时自动检查
+- 路径别名只用 `@/`，禁止相对路径穿越 `src`
+- 页面 `lazy()`；echarts / xlsx / pdf / mammoth / jspdf 等**禁止无谓顶层静态导入**
+- 状态默认 React 内置 + storage；复杂域可用 Zustand（如 ResumeEditor）
+- 列表页优先 `ListPage` + `DataTable` + `SearchBar` + `Pagination`
+- Prettier：单引号、无分号、2 空格、100 列；ESLint 9 Flat + TS + Prettier
+- Git commit：**仅中文、单行**（详见各工具 rules）
 
-## Notes
+细节以 Skills 为准，勿在本文件展开长规范：
 
-- 代理配置: `/api` → Java 后端 8080，`/fundapi`/`/fundgz`/`/fundsuggest`/`/funddata`/`/datacenter` → 东方财富基金 API
-- 支持 Hash 路由 (`VITE_HASH_ROUTER=true`) 用于 GitHub Pages 部署
-- 基金监控页面依赖外部 API 代理
+| 场景                      | 读                                      |
+| ------------------------- | --------------------------------------- |
+| 架构 / 路由 / 状态        | `.cursor/skills/frontend-architecture/` |
+| Vite / TS / antd / UnoCSS | `.cursor/skills/project-config/`        |
+| 代码风格与通用组件        | `.cursor/skills/project-standards/`     |
+| 东方财富基金 API          | `.cursor/skills/eastmoney-fund-api/`    |
+| 代码审查清单              | `.cursor/skills/code-review/`           |
+
+索引：[`.cursor/ai-tools-catalog.md`](./.cursor/ai-tools-catalog.md)。
+
+---
+
+## 运行与部署要点
+
+- **代理**（`vite.config.ts`）：`/api` → `127.0.0.1:8080`；`/fundapi`、`/fundgz`、`/fundsuggest`、`/funddata`、`/datacenter` → 东方财富相关域名
+- **环境变量**：见 [`.env.example`](./.env.example)（`VITE_BASE_PATH`、`VITE_HASH_ROUTER` 等）
+- **GitHub Pages**：CI 注入 `VITE_BASE_PATH` + `VITE_HASH_ROUTER=true`（Hash 避免深链 404）
+- **本机私有基金快照**：`src/private/fund-portfolio/`（已 ignore）；加载逻辑 `src/pages/Fund/privateBootstrap.ts`；说明见 `README.md`
+
+---
+
+## 文档边界
+
+| 文件                   | 写什么                                 | 不写什么                         |
+| ---------------------- | -------------------------------------- | -------------------------------- |
+| **本文件 `AGENTS.md`** | 项目事实、命令、结构、约定索引         | Cursor/Claude 权限、MCP 安装步骤 |
+| **`CLAUDE.md`**        | Claude Code 如何读本仓、settings/rules | 重复粘贴架构与命令全文           |
+| **`README.md`**        | 面向人类的快速开始与功能说明           | AI 行为细则                      |
+| **`.cursor/skills/`**  | 可执行的深度规范（两工具共用）         | 工具账号级私有配置               |

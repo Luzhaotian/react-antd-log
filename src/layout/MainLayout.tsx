@@ -6,6 +6,7 @@ import type { MenuProps } from 'antd'
 import Logo from '@/layout/components/Logo'
 import Breadcrumb from '@/layout/components/Breadcrumb'
 import TextButton from '@/components/TextButton'
+import ErrorBoundary from '@/components/ErrorBoundary'
 import { menuItems, getSelectedKeys, getOpenKeys } from '@/layout/config/menu'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { clearAuthSession } from '@/utils'
@@ -112,17 +113,19 @@ function MainLayout() {
             borderRadius: borderRadiusLG,
           }}
         >
-          <Suspense
-            fallback={
-              <div className="flex-center min-h-[400px]">
-                <Spin size="large" />
+          <ErrorBoundary embedded>
+            <Suspense
+              fallback={
+                <div className="flex-center min-h-[400px]">
+                  <Spin size="large" />
+                </div>
+              }
+            >
+              <div style={{ viewTransitionName: 'page-content' }}>
+                <Outlet />
               </div>
-            }
-          >
-            <div style={{ viewTransitionName: 'page-content' }}>
-              <Outlet />
-            </div>
-          </Suspense>
+            </Suspense>
+          </ErrorBoundary>
         </Content>
       </Layout>
     </Layout>

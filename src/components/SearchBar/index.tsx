@@ -1,6 +1,6 @@
 import { Form, Input, Button, Space, Card, Row, Col } from 'antd'
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import type { SearchBarProps } from '@/types'
 
 function SearchBar({
@@ -14,14 +14,9 @@ function SearchBar({
   extra,
 }: SearchBarProps) {
   const [form] = Form.useForm()
-  const [expanded, setExpanded] = useState(!expandable)
-
-  // 如果字段数量少于默认展开数量，则自动展开
-  useEffect(() => {
-    if (fields.length <= defaultExpandCount) {
-      setExpanded(true)
-    }
-  }, [fields.length, defaultExpandCount])
+  const [userExpanded, setUserExpanded] = useState(false)
+  const forceExpand = !expandable || fields.length <= defaultExpandCount
+  const expanded = forceExpand || userExpanded
 
   const handleSearch = () => {
     form.validateFields().then(values => {
@@ -73,7 +68,7 @@ function SearchBar({
                   </Button>
                 )}
                 {expandable && fields.length > defaultExpandCount && (
-                  <Button type="link" onClick={() => setExpanded(!expanded)}>
+                  <Button type="link" onClick={() => setUserExpanded(v => !v)}>
                     {expanded ? '收起' : '展开'}
                   </Button>
                 )}

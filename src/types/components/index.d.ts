@@ -1,3 +1,6 @@
+/** 错误边界 */
+export * from './errorBoundary'
+
 /** 页面离开确认组件 */
 export * from './pageLeaveGuard'
 

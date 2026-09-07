@@ -13,9 +13,14 @@ import 'virtual:uno.css'
 import './index.css'
 import MainLayout from '@/layout/MainLayout'
 import RequireAuth from '@/components/RequireAuth'
+import ErrorBoundary from '@/components/ErrorBoundary'
+import { RouteErrorPage } from '@/components/ErrorFallback'
 import { routes } from '@/routes'
+import { setupGlobalErrorHandlers } from '@/utils'
 
 const Login = lazy(() => import('@/pages/Login'))
+
+setupGlobalErrorHandlers()
 
 // 中国时区 + 中文：Ant Design 日期/日历的星期、月份由 dayjs locale 决定
 dayjs.locale('zh-cn')
@@ -69,6 +74,7 @@ if (!skipRender) {
           <Login />
         </Suspense>
       ),
+      errorElement: <RouteErrorPage />,
     },
     {
       path: '/',
@@ -77,6 +83,7 @@ if (!skipRender) {
           <MainLayout />
         </RequireAuth>
       ),
+      errorElement: <RouteErrorPage />,
       children: routes,
     },
   ]
@@ -86,16 +93,18 @@ if (!skipRender) {
 
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
-      <ConfigProvider
-        locale={zhCN}
-        theme={{
-          token: {
-            colorPrimary: '#ff4d4f', // 红色主题色
-          },
-        }}
-      >
-        <RouterProvider router={router} />
-      </ConfigProvider>
+      <ErrorBoundary>
+        <ConfigProvider
+          locale={zhCN}
+          theme={{
+            token: {
+              colorPrimary: '#ff4d4f', // 红色主题色
+            },
+          }}
+        >
+          <RouterProvider router={router} />
+        </ConfigProvider>
+      </ErrorBoundary>
     </StrictMode>
   )
 }

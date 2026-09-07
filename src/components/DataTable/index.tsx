@@ -2,7 +2,7 @@ import { Table as AntdTable, Spin } from 'antd'
 import { useState, useEffect } from 'react'
 import type { CustomTableProps } from '@/types'
 
-function DataTable<T extends Record<string, any> = any>({
+function DataTable<T extends object = Record<string, unknown>>({
   dataSource = [],
   loading = false,
   bordered = true,

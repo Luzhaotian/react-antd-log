@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Form, Input, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import AppModal from '@/components/AppModal'
@@ -7,12 +7,16 @@ import { DEFAULT_EXPORT_FILENAME } from '@/constants'
 
 function ExportModal({ open, loading, list, form, onOk, onCancel }: ExportModalProps) {
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([])
+  const listKey = list.map(item => item.id).join('|')
+  const [synced, setSynced] = useState({ open: false, listKey: '' })
 
-  useEffect(() => {
+  // 打开弹窗或列表变化时默认可全选（渲染期同步，避免 effect 内 setState）
+  if (open !== synced.open || listKey !== synced.listKey) {
+    setSynced({ open, listKey })
     if (open && list.length > 0) {
       setSelectedRowKeys(list.map(item => item.id))
     }
-  }, [open, list])
+  }
 
   const handleOk = () => {
     return form.validateFields().then(() => {

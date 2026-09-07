@@ -8,7 +8,7 @@
 
 ## 1. DataTable
 
-**路径**: `src/components/DataTable`  
+**路径**: `src/components/DataTable`
 基于 Ant Design Table，内置边框、斑马纹、空态与 loading 文案。
 
 | 属性         | 类型      | 默认         | 说明                    |
@@ -30,7 +30,7 @@
 
 ## 2. Pagination
 
-**路径**: `src/components/Pagination`  
+**路径**: `src/components/Pagination`
 预设总数、快速跳转、每页条数选择及响应式。
 
 | 属性              | 类型                       | 默认                     |
@@ -60,7 +60,7 @@
 
 ## 3. SearchBar
 
-**路径**: `src/components/SearchBar`  
+**路径**: `src/components/SearchBar`
 Card + 内联 Form，支持搜索/重置、可展开收起。
 
 | 属性                 | 类型               | 说明            |
@@ -87,7 +87,7 @@ Card + 内联 Form，支持搜索/重置、可展开收起。
 
 ## 4. TextButton
 
-**路径**: `src/components/TextButton`  
+**路径**: `src/components/TextButton`
 `type="text"` 的 Button 封装，链接式无背景；支持 `forwardRef` 及透传 `ButtonProps`（除 `type`）。
 
 ```tsx
@@ -99,7 +99,7 @@ Card + 内联 Form，支持搜索/重置、可展开收起。
 
 ## 5. BeforeUnload
 
-**路径**: `src/components/BeforeUnload`  
+**路径**: `src/components/BeforeUnload`
 页面离开确认：刷新/关闭用 `beforeunload`，路由切换用 `useBlocker` + Modal。
 
 | 属性      | 类型      | 默认                    |
@@ -116,7 +116,7 @@ Card + 内联 Form，支持搜索/重置、可展开收起。
 
 ## 6. FilePreview
 
-**路径**: `src/components/FilePreview`  
+**路径**: `src/components/FilePreview`
 预览本地文件：图片（jpeg/png/gif/webp/svg/bmp）与 PDF；传入 `File`。
 
 | 属性           | 类型               | 默认     |
@@ -136,7 +136,7 @@ Card + 内联 Form，支持搜索/重置、可展开收起。
 
 ## 7. PageDetail
 
-**路径**: `src/components/PageDetail`  
+**路径**: `src/components/PageDetail`
 详情页/内容页统一布局：标题、描述、可选返回按钮、标题右侧操作区、内容区。
 
 | 属性               | 类型         | 默认 | 说明                         |
@@ -159,7 +159,7 @@ Card + 内联 Form，支持搜索/重置、可展开收起。
 
 ## 8. ListPage
 
-**路径**: `src/components/ListPage`  
+**路径**: `src/components/ListPage`
 列表页统一布局：标题、描述、标题右侧操作区、可选搜索栏（SearchBar）、主内容区。风格与 Fund / 房贷列表等保持一致。
 
 | 属性             | 类型             | 说明                              |
@@ -188,7 +188,7 @@ Card + 内联 Form，支持搜索/重置、可展开收起。
 
 ## 9. ImagePreview
 
-**路径**: `src/components/ImagePreview`  
+**路径**: `src/components/ImagePreview`
 图片缩略图 + 点击放大预览的统一封装，基于 antd `Image`，适合在表格中展示并快速查看大图。
 
 | 属性      | 类型         | 默认         | 说明                     |
@@ -205,6 +205,27 @@ Card + 内联 Form，支持搜索/重置、可展开收起。
 
 ---
 
+## 10. ErrorBoundary
+
+路径：`src/components/ErrorBoundary`
+文档：`docs/components/ErrorBoundary.md`
+
+捕获子树渲染错误，默认展示 `ErrorFallback`；路由加载失败用 `RouteErrorPage`（`errorElement`）。
+
+| 参数       | 类型                                       | 必填 | 说明       |
+| ---------- | ------------------------------------------ | ---- | ---------- |
+| `children` | `ReactNode`                                | 是   | 子树       |
+| `fallback` | `ReactNode \| (error, reset) => ReactNode` | 否   | 自定义兜底 |
+| `onError`  | `(error, info) => void`                    | 否   | 捕获回调   |
+
+```tsx
+<ErrorBoundary>
+  <Outlet />
+</ErrorBoundary>
+```
+
+---
+
 ## 使用优先级
 
 1. 列表页（标题+可选搜索+表格）→ `ListPage` + `DataTable`（+ 可选 `SearchBar` 通过 searchBarProps）
@@ -215,7 +236,8 @@ Card + 内联 Form，支持搜索/重置、可展开收起。
 6. 文件预览（图片/PDF）→ `FilePreview`
 7. 详情页/设置页/工具页统一布局 → `PageDetail`
 8. 图片缩略图点击放大预览 → `ImagePreview`
-9. 无现成组件 → antd 或 `src` 下其他模块
+9. 渲染错误兜底 → `ErrorBoundary`
+10. 无现成组件 → antd 或 `src` 下其他模块
 
 ## 扩展组件
 

@@ -100,6 +100,14 @@ function PropertyItem({
     [depth, valueType, keyName, isArrayItem, index, summary, depthColors, isMatch]
   )
 
+  const expandIcon = useMemo(
+    () =>
+      ({ isActive }: { isActive?: boolean }) => (
+        <ExpandIcon isActive={isActive} accentClass={depthColors.accent} />
+      ),
+    [depthColors.accent]
+  )
+
   // 简单值：单行展示，左侧为完整可见的竖条药丸色块（两端圆角 + 与内容留白）
   if (!isComplex) {
     return (
@@ -126,14 +134,6 @@ function PropertyItem({
 
   // 复杂值：用折叠面板包裹，子项递归（仅左侧色条 + 自定义箭头）
   const panelKey = isArrayItem ? `arr-${index}` : `obj-${keyName}`
-
-  const expandIcon = useMemo(
-    () =>
-      ({ isActive }: { isActive?: boolean }) => (
-        <ExpandIcon isActive={isActive} accentClass={depthColors.accent} />
-      ),
-    [depthColors.accent]
-  )
 
   return (
     <div

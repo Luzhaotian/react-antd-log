@@ -21,3 +21,9 @@ export * from './request'
 
 /** AI 配置（apiKey 存 sessionStorage） */
 export * from './aiConfig'
+
+/** 前端日志（无后端上报） */
+export * from './logger'
+
+/** 全局未捕获错误监听 */
+export * from './setupGlobalErrorHandlers'
