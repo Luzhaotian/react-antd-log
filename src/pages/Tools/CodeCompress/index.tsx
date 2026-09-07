@@ -16,6 +16,13 @@ import { detectCodeType, formatCodeByType } from '@/utils'
 const { TextArea } = Input
 const { Text } = Typography
 
+const TYPE_LABEL: Record<CompressType, string> = {
+  [COMPRESS_TYPE.JSON]: 'JSON',
+  [COMPRESS_TYPE.JS]: 'JavaScript',
+  [COMPRESS_TYPE.CSS]: 'CSS',
+  [COMPRESS_TYPE.HTML]: 'HTML',
+}
+
 function CodeCompress() {
   const [inputCode, setInputCode] = useState('')
   const [outputCode, setOutputCode] = useState('')
@@ -66,13 +73,6 @@ function CodeCompress() {
     }
   }, [])
 
-  const typeLabel: Record<CompressType, string> = {
-    [COMPRESS_TYPE.JSON]: 'JSON',
-    [COMPRESS_TYPE.JS]: 'JavaScript',
-    [COMPRESS_TYPE.CSS]: 'CSS',
-    [COMPRESS_TYPE.HTML]: 'HTML',
-  }
-
   const handleCompress = useCallback(() => {
     if (!inputCode.trim()) {
       message.warning('请输入要压缩的代码')
@@ -81,7 +81,7 @@ function CodeCompress() {
     const detectedType = detectCodeType(inputCode)
     if (detectedType !== compressType) {
       message.warning(
-        `检测到代码类型为「${typeLabel[detectedType]}」，请先切换到「${typeLabel[detectedType]}」再压缩`
+        `检测到代码类型为「${TYPE_LABEL[detectedType]}」，请先切换到「${TYPE_LABEL[detectedType]}」再压缩`
       )
       return
     }
@@ -129,14 +129,14 @@ function CodeCompress() {
     const detectedType = detectCodeType(inputCode)
     if (detectedType !== compressType) {
       message.warning(
-        `检测到代码类型为「${typeLabel[detectedType]}」，请先切换到「${typeLabel[detectedType]}」再格式化`
+        `检测到代码类型为「${TYPE_LABEL[detectedType]}」，请先切换到「${TYPE_LABEL[detectedType]}」再格式化`
       )
       return
     }
     const formatted = formatCodeByType(inputCode, compressType)
     if (formatted !== inputCode) {
       setInputCode(formatted)
-      message.success(`已按 ${typeLabel[compressType]} 格式化`)
+      message.success(`已按 ${TYPE_LABEL[compressType]} 格式化`)
     }
   }, [inputCode, compressType])
 

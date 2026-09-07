@@ -1,10 +1,6 @@
 import dayjs from 'dayjs'
 import { describe, expect, it } from 'vitest'
-import {
-  buildDownloadFileName,
-  buildFileName,
-  getExtension,
-} from '@/utils/pages/Tools/FileRename'
+import { buildDownloadFileName, buildFileName, getExtension } from '@/utils/pages/Tools/FileRename'
 import { DATE_NUM_TYPE, DEFAULT_EXPORT_FILENAME, TEMPLATE_VALUE_TYPE } from '@/constants'
 
 describe('FileRename 工具函数', () => {

@@ -46,14 +46,17 @@ describe('loanTracker 纯函数', () => {
       startDate: '2026-01-01',
       repaymentDay: 1,
     }
+    expect(isSameLoanTracker(base as LoanTrackerRecord, { ...base } as LoanTrackerRecord)).toBe(
+      true
+    )
     expect(
-      isSameLoanTracker(base as LoanTrackerRecord, { ...base } as LoanTrackerRecord)
-    ).toBe(true)
-    expect(
-      isSameLoanTracker(base as LoanTrackerRecord, {
-        ...base,
-        annualRate: 4,
-      } as LoanTrackerRecord)
+      isSameLoanTracker(
+        base as LoanTrackerRecord,
+        {
+          ...base,
+          annualRate: 4,
+        } as LoanTrackerRecord
+      )
     ).toBe(false)
   })
 

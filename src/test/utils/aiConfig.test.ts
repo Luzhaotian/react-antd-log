@@ -1,9 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import {
-  clearAIConfigKey,
-  getSavedAIConfig,
-  saveAIConfig,
-} from '@/utils/aiConfig'
+import { clearAIConfigKey, getSavedAIConfig, saveAIConfig } from '@/utils/aiConfig'
 
 describe('aiConfig', () => {
   afterEach(() => {
